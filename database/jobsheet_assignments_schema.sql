@@ -51,6 +51,10 @@ CREATE POLICY "Admins can update assignments" ON public.jobsheet_assignments
         EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
     );
 
+-- Mahasiswa can delete their own assignments
+CREATE POLICY "Mahasiswa can delete own assignments" ON public.jobsheet_assignments
+    FOR DELETE USING (student_id = auth.uid());
+
 -- Admins can delete assignments
 CREATE POLICY "Admins can delete assignments" ON public.jobsheet_assignments
     FOR DELETE USING (

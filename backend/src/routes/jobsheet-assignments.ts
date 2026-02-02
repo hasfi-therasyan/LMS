@@ -84,12 +84,22 @@ router.post(
         });
       }
 
+      // Determine bucket name based on upload number (1-based index)
+      // Upload 1 -> jobsheet-assignments
+      // Upload 2 -> jobsheet-assignments-2
+      // Upload 3 -> jobsheet-assignments-3
+      // Upload 4 -> jobsheet-assignments-4
+      const uploadNumber = (existingAssignments?.length || 0) + 1;
+      const bucketName = uploadNumber === 1 
+        ? 'jobsheet-assignments' 
+        : `jobsheet-assignments-${uploadNumber}`;
+
       // Upload file to Supabase Storage
       const fileName = `assignment-${Date.now()}-${req.file.originalname}`;
-      const filePath = `jobsheet-assignments/${fileName}`;
+      const filePath = fileName; // Store directly in bucket root, no subfolder
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('jobsheet-assignments')
+        .from(bucketName)
         .upload(filePath, req.file.buffer, {
           contentType: 'application/pdf',
           upsert: false
@@ -99,7 +109,7 @@ router.post(
         if (uploadError.message?.includes('Bucket not found')) {
           return res.status(400).json({
             error: 'Storage bucket not found',
-            message: 'The "jobsheet-assignments" storage bucket does not exist. Please create it in Supabase Dashboard → Storage → New Bucket (name: "jobsheet-assignments", set to Public)'
+            message: `The "${bucketName}" storage bucket does not exist. Please create it in Supabase Dashboard → Storage → New Bucket (name: "${bucketName}", set to Public)`
           });
         }
         throw uploadError;
@@ -107,7 +117,7 @@ router.post(
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('jobsheet-assignments')
+        .from(bucketName)
         .getPublicUrl(filePath);
 
       // Create assignment record
@@ -125,7 +135,7 @@ router.post(
 
       if (dbError) {
         // Clean up uploaded file if database insert fails
-        await supabase.storage.from('jobsheet-assignments').remove([filePath]);
+        await supabase.storage.from(bucketName).remove([filePath]);
         throw dbError;
       }
 
@@ -479,37 +489,91 @@ router.delete(
         });
       }
 
-      // Students cannot delete if already graded
-      if (isOwner && assignment.grade !== null) {
-        return res.status(403).json({
-          error: 'Forbidden',
-          message: 'Cannot delete assignment that has already been graded'
-        });
-      }
+      // Students can delete their own assignments (graded or not)
+      // No restriction for students - they can delete anytime
 
-      // Extract file path from URL
+      // Extract bucket name and file path from URL
+      // URL format: https://xxx.supabase.co/storage/v1/object/public/{bucketName}/{fileName}
+      // Or: https://xxx.supabase.co/storage/v1/object/sign/{bucketName}/{fileName}?token=...
       const fileUrl = assignment.file_url;
-      const filePath = fileUrl.split('/jobsheet-assignments/')[1];
+      let bucketName: string | null = null;
+      let fileName: string | null = null;
       
-      if (filePath) {
-        // Delete file from storage
-        await supabase.storage
-          .from('jobsheet-assignments')
-          .remove([`jobsheet-assignments/${filePath}`]);
+      // Try different URL patterns
+      const patterns = [
+        /\/storage\/v1\/object\/public\/([^\/]+)\/(.+)$/,  // Public URL
+        /\/storage\/v1\/object\/sign\/([^\/]+)\/(.+?)(\?|$)/,  // Signed URL
+        /\/storage\/v1\/object\/authenticated\/([^\/]+)\/(.+?)(\?|$)/  // Authenticated URL
+      ];
+      
+      for (const pattern of patterns) {
+        const match = fileUrl.match(pattern);
+        if (match) {
+          bucketName = match[1];
+          fileName = match[2];
+          break;
+        }
+      }
+      
+      let storageDeleted = false;
+      if (bucketName && fileName) {
+        console.log(`Attempting to delete file from storage: bucket=${bucketName}, file=${fileName}`);
+        
+        try {
+          // Delete file from storage
+          const { data: storageData, error: storageError } = await supabase.storage
+            .from(bucketName)
+            .remove([fileName]);
+          
+          if (storageError) {
+            console.error('Error deleting file from storage:', storageError);
+            console.error('Error details:', JSON.stringify(storageError, null, 2));
+            // Continue with database deletion even if storage deletion fails
+            // (file might already be deleted or bucket might not exist)
+          } else {
+            storageDeleted = true;
+            console.log('File successfully deleted from storage:', storageData);
+          }
+        } catch (storageException: any) {
+          console.error('Exception while deleting from storage:', storageException);
+          console.error('Exception details:', JSON.stringify(storageException, null, 2));
+        }
+      } else {
+        console.warn('Could not extract bucket name and file path from URL:', fileUrl);
+        console.warn('Please check the file_url format in the database');
       }
 
-      // Delete assignment record
-      const { error: deleteError } = await supabase
+      // Delete assignment record from database
+      console.log(`Attempting to delete assignment record: id=${assignmentId}`);
+      const { data: deleteData, error: deleteError } = await supabase
         .from('jobsheet_assignments')
         .delete()
-        .eq('id', assignmentId);
+        .eq('id', assignmentId)
+        .select();
 
       if (deleteError) {
+        console.error('Error deleting assignment from database:', deleteError);
         throw deleteError;
       }
 
+      // Verify deletion
+      if (!deleteData || deleteData.length === 0) {
+        console.warn('No rows deleted from database. Assignment might not exist or RLS policy prevented deletion.');
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Assignment not found or could not be deleted. Please check RLS policies.'
+        });
+      }
+
+      console.log('Assignment successfully deleted from database:', deleteData);
+
       res.json({
-        message: 'Assignment deleted successfully'
+        message: 'Assignment deleted successfully',
+        deleted: {
+          assignmentId,
+          storageDeleted,
+          databaseDeleted: true
+        }
       });
     } catch (error: any) {
       res.status(500).json({
