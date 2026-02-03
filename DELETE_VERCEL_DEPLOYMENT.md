@@ -18,11 +18,45 @@ Ada beberapa cara untuk menghapus deployment di Vercel:
 
 ### **Step 2: Hapus Deployment**
 
+**Cara A: Via Deployment Detail Page**
 1. Klik tab **"Deployments"**
-2. Cari deployment yang ingin dihapus
-3. Klik **"..."** (three dots) pada deployment tersebut
-4. Pilih **"Delete"** atau **"Remove"**
-5. Konfirmasi penghapusan
+2. **Klik langsung pada deployment** (bukan pada "..." menu)
+3. Ini akan membuka halaman detail deployment
+4. Scroll ke bawah, cari tombol **"Delete"** atau **"Remove"** di bagian bawah
+5. Klik dan konfirmasi
+
+**Cara B: Via Settings (Jika cara A tidak ada)**
+1. Klik tab **"Settings"**
+2. Scroll ke bagian **"Deployments"** atau **"General"**
+3. Cari opsi untuk manage deployments
+4. Pilih deployment yang ingin dihapus
+
+**Cara C: Via Vercel CLI (Paling Reliable)**
+```bash
+# Install Vercel CLI (jika belum)
+npm i -g vercel
+
+# Login
+vercel login
+
+# List semua deployments
+vercel ls
+
+# Hapus deployment tertentu (ganti [deployment-id] dengan ID deployment)
+vercel rm [deployment-id] --yes
+
+# Atau hapus berdasarkan URL
+vercel rm https://your-app.vercel.app --yes
+```
+
+**Cara D: Hapus via API (Advanced)**
+1. Buka Vercel Dashboard → Settings → Tokens
+2. Buat API token baru
+3. Gunakan API untuk delete:
+```bash
+curl -X DELETE "https://api.vercel.com/v13/deployments/[deployment-id]" \
+  -H "Authorization: Bearer [your-token]"
+```
 
 **Hasil:**
 - ✅ Deployment tersebut akan dihapus
@@ -169,10 +203,25 @@ vercel --prod
 ## 📋 Quick Reference
 
 ### **Hapus Deployment Tertentu:**
-1. Dashboard → Project → Deployments
-2. Klik "..." pada deployment
-3. Pilih "Delete"
-4. Konfirmasi
+
+**Jika opsi "Delete" tidak muncul di menu "...":**
+
+1. **Cara 1: Klik langsung pada deployment**
+   - Dashboard → Project → Deployments
+   - Klik langsung pada deployment (bukan menu "...")
+   - Scroll ke bawah di halaman detail
+   - Cari tombol "Delete" atau "Remove"
+
+2. **Cara 2: Via Vercel CLI (Paling Mudah)**
+   ```bash
+   vercel ls                    # List deployments
+   vercel rm [deployment-id] --yes   # Hapus deployment
+   ```
+
+3. **Cara 3: Via Settings**
+   - Dashboard → Project → Settings
+   - Cari bagian "Deployments"
+   - Manage deployments dari sana
 
 ### **Hapus Semua Deployment:**
 1. Dashboard → Project → Settings
