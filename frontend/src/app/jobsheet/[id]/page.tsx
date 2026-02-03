@@ -50,9 +50,25 @@ export default function JobsheetViewPage() {
     setLoading(true);
     try {
       const response = await apiClient.getJobsheet(params.id as string);
-      setJobsheet(response.data);
+      const jobsheetData = response.data;
+      
+      // Validate file_url
+      if (jobsheetData.file_url) {
+        // Check if URL is valid
+        try {
+          const url = new URL(jobsheetData.file_url);
+          console.log('Jobsheet file URL:', jobsheetData.file_url);
+        } catch (urlError) {
+          console.error('Invalid file URL:', jobsheetData.file_url);
+          toast.error('File URL tidak valid. Silakan hubungi administrator.');
+        }
+      }
+      
+      setJobsheet(jobsheetData);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to load jobsheet');
+      console.error('Error loading jobsheet:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load jobsheet';
+      toast.error(errorMessage);
       // Redirect based on role
       if (profile?.role === 'admin') {
         router.push('/admin#jobsheets');
