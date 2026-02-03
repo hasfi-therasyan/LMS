@@ -2,10 +2,10 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "installCommand": "cd .. && npm install --prefix api && cd frontend && npm install --include=dev",
+  "installCommand": "cd .. && npm install --prefix api && npm install --include=dev",
   "functions": {
-    "../api/index.ts": {
-      "includeFiles": "../api/_src/**",
+    "api/index.ts": {
+      "includeFiles": "api/_src/**",
       "maxDuration": 30,
       "memory": 1024
     }
