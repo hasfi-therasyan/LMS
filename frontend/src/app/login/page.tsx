@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
