@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -29,11 +31,13 @@ const nextConfig = {
     ];
   },
   // Ensure TypeScript path aliases work
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
+    // Resolve path aliases
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': require('path').resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, './src'),
     };
+    
     return config;
   },
 }
