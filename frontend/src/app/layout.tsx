@@ -9,8 +9,13 @@ export const metadata: Metadata = {
   title: 'SmartLMS - AI-Powered Learning Management System',
   description: 'Smart Learning Management System with Integrated AI Chatbot for Higher Education',
   icons: {
-    icon: '/favicon.svg',
-    apple: '/icon.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.svg', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
   },
 };
 
