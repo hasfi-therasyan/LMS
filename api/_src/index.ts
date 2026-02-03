@@ -130,12 +130,14 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Start Server (only in development or standalone mode)
 // ============================================
 
-// Only start server if not running as serverless function
-if (process.env.VERCEL !== '1' && require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`🚀 LMS Backend server running on port ${PORT}`);
+// Start server if not running as serverless function (Vercel)
+// Railway will use PORT from environment variable
+if (process.env.VERCEL !== '1') {
+  const serverPort = process.env.PORT || PORT;
+  app.listen(serverPort, '0.0.0.0', () => {
+    console.log(`🚀 LMS Backend server running on port ${serverPort}`);
     console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔗 Health check: http://0.0.0.0:${serverPort}/health`);
   });
 }
 
