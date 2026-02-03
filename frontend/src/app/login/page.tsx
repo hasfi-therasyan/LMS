@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
@@ -9,7 +9,8 @@ import toast from 'react-hot-toast';
 
 export const dynamic = 'force-dynamic';
 
-export default function LoginPage() {
+// Component to handle search params (wrapped in Suspense)
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser, loadProfile } = useAuthStore();
