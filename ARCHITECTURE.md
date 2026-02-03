@@ -73,7 +73,7 @@ Send to Gemini API (with context) → Receive Response → Display to Student
 - **Authentication**: Supabase Auth
 - **File Storage**: Supabase Storage
 - **AI Service**: Google Gemini API
-- **Deployment**: Frontend → Netlify, Backend → (TBD - Vercel/Railway/Render)
+- **Deployment**: Frontend + Backend → Vercel (Full Stack)
 
 ## Security Considerations
 
