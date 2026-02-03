@@ -6,7 +6,7 @@
       "src": "api/index.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["api/src/**"],
+        "includeFiles": ["api/src/**", "api/package.json"],
         "maxLambdaSize": "50mb"
       }
     },
