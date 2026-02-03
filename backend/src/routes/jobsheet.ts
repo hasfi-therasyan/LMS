@@ -218,6 +218,43 @@ router.get('/:id', authenticate, async (req, res) => {
     }
     // Mahasiswa can access ALL jobsheets (no enrollment required)
 
+    // If file_url exists, try to verify and fix it if needed
+    if (data.file_url) {
+      try {
+        // Parse the URL to extract bucket and path
+        const url = new URL(data.file_url);
+        const pathParts = url.pathname.split('/').filter(p => p);
+        
+        // Find storage path (usually /storage/v1/object/public/bucket/path)
+        const storageIndex = pathParts.findIndex(p => p === 'storage');
+        if (storageIndex >= 0 && pathParts[storageIndex + 1] === 'v1') {
+          const bucketName = pathParts[storageIndex + 3]; // After 'object/public'
+          const filePath = pathParts.slice(storageIndex + 4).join('/');
+          
+          // Try to regenerate the URL with correct format
+          const { data: urlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(filePath);
+          
+          // Check if the new URL is different (might be more reliable)
+          if (urlData.publicUrl && urlData.publicUrl !== data.file_url) {
+            console.log('Regenerating file URL for jobsheet:', id);
+            console.log('Old URL:', data.file_url);
+            console.log('New URL:', urlData.publicUrl);
+            
+            // Update in database if URL changed significantly
+            // (Only update if the path structure is different)
+            if (urlData.publicUrl.includes(bucketName)) {
+              data.file_url = urlData.publicUrl;
+            }
+          }
+        }
+      } catch (urlError) {
+        console.error('Error processing file URL for jobsheet:', id, urlError);
+        // Continue with original URL - don't fail the request
+      }
+    }
+
     res.json(data);
   } catch (error: any) {
     res.status(500).json({
