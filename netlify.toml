@@ -1,6 +1,6 @@
 [build]
   base = "."
-  command = "npm install --prefix backend && npm install --prefix frontend && cd frontend && npm run build"
+  command = "npm install --prefix backend && npm install --prefix frontend && cd backend && npm run build && cd ../frontend && npm run build"
   publish = "frontend/.next"
 
 [build.environment]
@@ -10,7 +10,7 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["backend/**"]
+  included_files = ["backend/dist/**", "backend/node_modules/**"]
 
 # Redirect API calls ke Netlify Functions
 [[redirects]]
