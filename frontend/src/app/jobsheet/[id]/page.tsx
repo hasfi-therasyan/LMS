@@ -60,15 +60,35 @@ export default function JobsheetViewPage() {
       const response = await apiClient.getJobsheet(params.id as string);
       const jobsheetData = response.data;
       
-      // Validate file_url
+      // Validate and fix file_url encoding
       if (jobsheetData.file_url) {
-        // Check if URL is valid
         try {
+          // Decode URL to check for encoding issues
+          const decodedUrl = decodeURIComponent(jobsheetData.file_url);
+          console.log('Original URL:', jobsheetData.file_url);
+          console.log('Decoded URL:', decodedUrl);
+          
+          // Re-encode URL properly to ensure it's valid
+          // Split URL into base and path parts
           const url = new URL(jobsheetData.file_url);
-          console.log('Jobsheet file URL:', jobsheetData.file_url);
+          const pathParts = url.pathname.split('/');
+          const fileName = pathParts[pathParts.length - 1];
+          
+          // Properly encode the filename
+          const encodedFileName = encodeURIComponent(decodeURIComponent(fileName));
+          const fixedPath = pathParts.slice(0, -1).join('/') + '/' + encodedFileName;
+          const fixedUrl = `${url.origin}${fixedPath}${url.search}${url.hash}`;
+          
+          // Use fixed URL if different
+          if (fixedUrl !== jobsheetData.file_url) {
+            console.log('Fixed URL encoding:', fixedUrl);
+            jobsheetData.file_url = fixedUrl;
+          }
+          
+          console.log('Final file URL:', jobsheetData.file_url);
         } catch (urlError) {
-          console.error('Invalid file URL:', jobsheetData.file_url);
-          toast.error('File URL tidak valid. Silakan hubungi administrator.');
+          console.error('Invalid file URL:', jobsheetData.file_url, urlError);
+          // Continue with original URL
         }
       }
       
@@ -248,31 +268,13 @@ export default function JobsheetViewPage() {
                       setPdfLoadingTimeout(timeout);
                     }}
                   />
-                  {/* Fallback: Use object tag for better compatibility */}
-                  <object
-                    data={`${jobsheet.file_url}#toolbar=1&navpanes=1&scrollbar=1`}
+                  {/* Fallback: Use embed tag for better compatibility */}
+                  <embed
+                    src={`${jobsheet.file_url}#toolbar=1&navpanes=1&scrollbar=1`}
                     type="application/pdf"
                     className="w-full h-full border-0 hidden"
-                    aria-label={jobsheet.name}
-                    onError={() => {
-                      console.error('Object tag failed to load PDF');
-                      // Don't set error immediately, let iframe try first
-                    }}
-                  >
-                    <div className="flex items-center justify-center h-full bg-gray-50">
-                      <div className="text-center p-8">
-                        <p className="text-gray-600 mb-4">PDF tidak dapat ditampilkan di browser ini</p>
-                        <a
-                          href={jobsheet.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium inline-flex items-center space-x-2"
-                        >
-                          <span>Buka di Tab Baru</span>
-                        </a>
-                      </div>
-                    </div>
-                  </object>
+                    style={{ display: pdfError ? 'block' : 'none' }}
+                  />
                 </>
               )
             ) : (
