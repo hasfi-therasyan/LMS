@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "npm install --prefix backend && npm install --prefix frontend",
+  "installCommand": "npm install --prefix api && npm install --prefix frontend",
   "builds": [
     {
       "src": "api/index.ts",
