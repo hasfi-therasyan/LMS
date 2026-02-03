@@ -120,26 +120,38 @@ router.post(
         throw uploadError;
       }
 
-      // Get public URL - ensure path is correct
+      // Get public URL using the actual path from upload response
+      // uploadData.path contains the actual path where file was stored
+      const actualPath = uploadData.path;
       const { data: urlData } = supabase.storage
         .from('jobsheets')
-        .getPublicUrl(filePath);
+        .getPublicUrl(actualPath);
 
-      // Verify the file exists and URL is valid
-      const { data: fileCheck, error: fileCheckError } = await supabase.storage
+      // Verify the file exists
+      const { data: fileList, error: fileCheckError } = await supabase.storage
         .from('jobsheets')
-        .list(uploadData.path.split('/').slice(0, -1).join('/') || '', {
-          limit: 1,
-          search: uploadData.path.split('/').pop()
+        .list(actualPath.split('/').slice(0, -1).join('/') || '', {
+          limit: 100
         });
 
       if (fileCheckError) {
         console.error('Error verifying uploaded file:', fileCheckError);
-        // Continue anyway, but log the error
+      } else {
+        const fileName = actualPath.split('/').pop();
+        const fileExists = fileList?.some(f => f.name === fileName);
+        console.log('File verification:', {
+          path: actualPath,
+          fileName,
+          exists: fileExists,
+          fileListCount: fileList?.length || 0
+        });
       }
 
-      console.log('File uploaded to:', uploadData.path);
-      console.log('Public URL generated:', urlData.publicUrl);
+      console.log('File upload details:', {
+        requestedPath: filePath,
+        actualPath: uploadData.path,
+        publicUrl: urlData.publicUrl
+      });
 
       // Create jobsheet record in database
       const { data, error } = await supabase
