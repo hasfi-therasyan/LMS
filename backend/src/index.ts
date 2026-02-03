@@ -96,11 +96,17 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // ============================================
-// Start Server
+// Start Server (only in development or standalone mode)
 // ============================================
 
-app.listen(PORT, () => {
-  console.log(`🚀 LMS Backend server running on port ${PORT}`);
-  console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-});
+// Only start server if not running as serverless function
+if (process.env.VERCEL !== '1' && require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 LMS Backend server running on port ${PORT}`);
+    console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  });
+}
+
+// Export app for Vercel serverless functions
+export default app;
