@@ -99,8 +99,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Start Server (only in development or standalone mode)
 // ============================================
 
-// Only start server if not running as serverless function
-if (process.env.VERCEL !== '1' && require.main === module) {
+// Only start server if not running as serverless function (Vercel or Netlify)
+if (process.env.VERCEL !== '1' && process.env.NETLIFY !== '1' && require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 LMS Backend server running on port ${PORT}`);
     console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
