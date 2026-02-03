@@ -20,19 +20,15 @@
 
 ---
 
-## 🎯 **Yang BISA BERUBAH: Platform Deployment**
+## 🎯 **Platform Deployment: Vercel (Full Stack)**
 
-### **Frontend & Backend bisa di-deploy di:**
+### **Frontend & Backend di-deploy di:**
 
 | Platform | Frontend | Backend | Keterangan |
 |----------|----------|---------|------------|
-| **Netlify** | ✅ Next.js | ✅ Netlify Functions | Full stack di satu platform |
-| **Netlify + Railway** | ✅ Next.js | ✅ Express Server | Pemisahan jelas |
 | **Vercel** | ✅ Next.js | ✅ Vercel Functions | Full stack di satu platform |
-| **Vercel + Railway** | ✅ Next.js | ✅ Express Server | Pemisahan jelas |
-| **Netlify + Render** | ✅ Next.js | ✅ Express Server | Alternatif Railway |
 
-**Tapi semua tetap connect ke:**
+**Semua tetap connect ke:**
 - ✅ Supabase (Database + Storage)
 - ✅ Google Gemini API (AI)
 
@@ -42,15 +38,13 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    DEPLOYMENT PLATFORM                       │
-│  ┌──────────────────┐         ┌──────────────────┐          │
-│  │   FRONTEND       │         │    BACKEND       │          │
-│  │   (Next.js)      │◄───────►│  (Express API)   │          │
-│  │                  │  HTTP   │                  │          │
-│  │  - Netlify      │         │  - Netlify Func   │          │
-│  │  - Vercel       │         │  - Railway        │          │
-│  │  - dll          │         │  - Render         │          │
-│  └──────────────────┘         └──────────────────┘          │
+│                    VERCEL PLATFORM                         │
+│  ┌──────────────────┐         ┌──────────────────┐       │
+│  │   FRONTEND       │         │    BACKEND       │       │
+│  │   (Next.js)      │◄───────►│  (Express API)   │       │
+│  │                  │  HTTP   │  (Serverless)     │       │
+│  │  - Vercel       │         │  - Vercel Func   │       │
+│  └──────────────────┘         └──────────────────┘       │
 └─────────────────────────────────────────────────────────────┘
                             │
                             │ API Calls
@@ -75,9 +69,9 @@
 
 ### **1. Frontend → Backend**
 ```
-Frontend (Netlify/Vercel) 
-  └─► HTTP Request 
-      └─► Backend (Netlify Functions/Railway/Vercel)
+Frontend (Vercel) 
+  └─► HTTP Request (/api/*)
+      └─► Backend (Vercel Serverless Functions)
 ```
 
 ### **2. Backend → Supabase**
@@ -111,9 +105,9 @@ Frontend
 
 ## 🔑 **Environment Variables**
 
-### **Yang SELALU DIPERLUKAN (Tidak Peduli Platform):**
+### **Yang SELALU DIPERLUKAN:**
 
-#### **Backend:**
+#### **Backend (Vercel):**
 ```env
 # Supabase (Database + Storage)
 SUPABASE_URL=https://your-project-id.supabase.co
@@ -124,18 +118,24 @@ SUPABASE_ANON_KEY=your-anon-key
 GEMINI_API_KEY=your-gemini-api-key
 
 # Frontend URL (untuk CORS)
-FRONTEND_URL=https://your-app.netlify.app
+FRONTEND_URL=https://your-app.vercel.app
+
+# Environment
+NODE_ENV=production
+MAX_FILE_SIZE=10485760
 ```
 
-#### **Frontend:**
+#### **Frontend (Vercel):**
 ```env
 # Supabase (Auth + Direct Access)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Backend API URL (jika backend terpisah)
-NEXT_PUBLIC_API_URL=https://your-backend.railway.app
-# Atau kosongkan jika menggunakan Netlify Functions
+# Maintenance Mode
+MAINTENANCE_MODE=false
+
+# Note: NEXT_PUBLIC_API_URL tidak perlu di-set
+# Frontend akan menggunakan relative path /api
 ```
 
 ---
@@ -148,20 +148,19 @@ NEXT_PUBLIC_API_URL=https://your-backend.railway.app
 - ✅ **Storage**: Selalu Supabase Storage
 - ✅ **Auth**: Selalu Supabase Auth
 
-### **Yang BISA BERUBAH:**
-- 🔄 **Frontend Hosting**: Netlify, Vercel, dll
-- 🔄 **Backend Hosting**: Netlify Functions, Railway, Render, Vercel Functions, dll
+### **Platform Deployment:**
+- 🎯 **Vercel Full Stack**: Frontend + Backend dalam satu project
 
 ### **Mengapa?**
 Karena Supabase dan Gemini adalah **cloud services terpisah** yang diakses via API. Mereka tidak tergantung pada platform deployment.
 
 ---
 
-## 🎯 **Contoh: Netlify Full Stack**
+## 🎯 **Contoh: Vercel Full Stack**
 
 ```
 ┌─────────────────────────────────────┐
-│         NETLIFY PLATFORM            │
+│         VERCEL PLATFORM             │
 │  ┌──────────────┐  ┌─────────────┐ │
 │  │  Frontend    │  │  Backend    │ │
 │  │  (Next.js)   │  │  (Functions)│ │
@@ -180,42 +179,19 @@ Karena Supabase dan Gemini adalah **cloud services terpisah** yang diakses via A
 
 ---
 
-## 🎯 **Contoh: Netlify + Railway**
-
-```
-┌──────────────┐         ┌──────────────┐
-│   NETLIFY    │         │   RAILWAY    │
-│  (Frontend)  │         │  (Backend)   │
-└──────────────┘         └──────────────┘
-       │                        │
-       │                        │
-       └──────────┬─────────────┘
-                  │
-         ┌────────┴────────┐
-         ▼                 ▼
-┌─────────────────┐  ┌─────────────────┐
-│   SUPABASE      │  │  GOOGLE GEMINI  │
-│   (Database)    │  │  (AI API)       │
-└─────────────────┘  └─────────────────┘
-```
-
-**Semua tetap connect ke Supabase dan Gemini!**
-
----
-
 ## 📝 **FAQ**
 
-### **Q: Apakah database akan berubah jika deploy ke Netlify?**
+### **Q: Apakah database akan berubah jika deploy ke Vercel?**
 **A:** Tidak. Database tetap Supabase, tidak peduli di mana di-deploy.
 
-### **Q: Apakah AI akan berubah jika deploy ke Railway?**
+### **Q: Apakah AI akan berubah jika deploy ke Vercel?**
 **A:** Tidak. AI tetap Google Gemini API, tidak peduli di mana backend di-deploy.
 
-### **Q: Apakah perlu setup Supabase lagi jika deploy ke platform baru?**
-**A:** Tidak. Supabase project yang sama digunakan, hanya perlu set environment variables di platform baru.
+### **Q: Apakah perlu setup Supabase lagi jika deploy ke Vercel?**
+**A:** Tidak. Supabase project yang sama digunakan, hanya perlu set environment variables di Vercel.
 
-### **Q: Apakah perlu setup Gemini API lagi jika deploy ke platform baru?**
-**A:** Tidak. Gemini API key yang sama digunakan, hanya perlu set environment variable di platform baru.
+### **Q: Apakah perlu setup Gemini API lagi jika deploy ke Vercel?**
+**A:** Tidak. Gemini API key yang sama digunakan, hanya perlu set environment variable di Vercel.
 
 ### **Q: Apakah data akan hilang jika pindah platform?**
 **A:** Tidak. Data tetap di Supabase, tidak peduli di mana aplikasi di-deploy.
@@ -228,4 +204,4 @@ Karena Supabase dan Gemini adalah **cloud services terpisah** yang diakses via A
 
 **Services terpisah (Supabase, Gemini) tetap sama dan diakses via API.**
 
-**Tidak ada perubahan pada database atau AI saat pindah platform deployment.**
+**Tidak ada perubahan pada database atau AI saat deploy ke Vercel.**
