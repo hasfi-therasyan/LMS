@@ -16,7 +16,8 @@ interface Question {
   optionB: string;
   optionC: string;
   optionD: string;
-  correctAnswer: 'A' | 'B' | 'C' | 'D';
+  optionE: string;
+  correctAnswer: 'A' | 'B' | 'C' | 'D' | 'E';
   points: number;
 }
 
@@ -31,10 +32,10 @@ export default function CreateQuizModal({
   isOpen,
   onClose,
   onSuccess,
-  modules
+  classes
 }: CreateQuizModalProps) {
   const [formData, setFormData] = useState({
-    moduleId: '',
+    classId: '',
     title: '',
     description: '',
     timeLimit: ''
@@ -46,6 +47,7 @@ export default function CreateQuizModal({
       optionB: '',
       optionC: '',
       optionD: '',
+      optionE: '',
       correctAnswer: 'A',
       points: 1
     }
@@ -63,6 +65,7 @@ export default function CreateQuizModal({
         optionB: '',
         optionC: '',
         optionD: '',
+        optionE: '',
         correctAnswer: 'A',
         points: 1
       }
@@ -84,7 +87,7 @@ export default function CreateQuizModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.moduleId || !formData.title) {
+    if (!formData.classId || !formData.title) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -92,8 +95,8 @@ export default function CreateQuizModal({
     // Validate all questions
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      if (!q.questionText || !q.optionA || !q.optionB || !q.optionC || !q.optionD) {
-        toast.error(`Please complete question ${i + 1}`);
+      if (!q.questionText || !q.optionA || !q.optionB || !q.optionC || !q.optionD || !q.optionE) {
+        toast.error(`Please complete question ${i + 1} (all options A-E are required)`);
         return;
       }
     }
@@ -113,7 +116,7 @@ export default function CreateQuizModal({
       }));
 
       await apiClient.createQuiz({
-        moduleId: formData.moduleId,
+        classId: formData.classId,
         title: formData.title,
         description: formData.description || undefined,
         timeLimit: formData.timeLimit ? parseInt(formData.timeLimit) : undefined,
@@ -131,7 +134,7 @@ export default function CreateQuizModal({
   };
 
   const handleClose = () => {
-    setFormData({ moduleId: '', title: '', description: '', timeLimit: '' });
+    setFormData({ classId: '', title: '', description: '', timeLimit: '' });
     setQuestions([
       {
         questionText: '',
@@ -164,18 +167,18 @@ export default function CreateQuizModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Module <span className="text-red-500">*</span>
+                  Class (Jobsheet) <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={formData.moduleId}
-                  onChange={(e) => setFormData({ ...formData, moduleId: e.target.value })}
+                  value={formData.classId}
+                  onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 >
-                  <option value="">Select a module</option>
-                  {modules.map((module) => (
-                    <option key={module.id} value={module.id}>
-                      {module.title}
+                  <option value="">Select a class</option>
+                  {classes.map((classItem) => (
+                    <option key={classItem.id} value={classItem.id}>
+                      {classItem.code} - {classItem.name}
                     </option>
                   ))}
                 </select>
@@ -314,6 +317,18 @@ export default function CreateQuizModal({
                             required
                           />
                         </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Option E <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={question.optionE}
+                            onChange={(e) => updateQuestion(index, 'optionE', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            required
+                          />
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
@@ -323,7 +338,7 @@ export default function CreateQuizModal({
                           </label>
                           <select
                             value={question.correctAnswer}
-                            onChange={(e) => updateQuestion(index, 'correctAnswer', e.target.value as 'A' | 'B' | 'C' | 'D')}
+                            onChange={(e) => updateQuestion(index, 'correctAnswer', e.target.value as 'A' | 'B' | 'C' | 'D' | 'E')}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                             required
                           >
@@ -331,6 +346,7 @@ export default function CreateQuizModal({
                             <option value="B">B</option>
                             <option value="C">C</option>
                             <option value="D">D</option>
+                            <option value="E">E</option>
                           </select>
                         </div>
                         <div>

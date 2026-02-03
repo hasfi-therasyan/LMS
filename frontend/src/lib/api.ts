@@ -90,6 +90,7 @@ export const apiClient = {
   getQuizSubmissions: (quizId: string) => api.get(`/submissions/quiz/${quizId}`),
   getQuizAnalytics: (quizId: string) => api.get(`/submissions/analytics/${quizId}`),
   getStudentSubmissions: () => api.get('/submissions/student'),
+  getAllSubmissions: () => api.get('/submissions/all'),
 
   // Admin
   getUsers: () => api.get('/admin/users'),
