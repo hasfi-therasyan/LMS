@@ -1,18 +1,20 @@
 [build]
-  base = "frontend"
-  command = "npm run build"
+  base = "."
+  command = "npm install --prefix backend && npm install --prefix frontend && cd frontend && npm run build"
   publish = "frontend/.next"
 
 [build.environment]
   NODE_VERSION = "18"
 
-# Redirect API calls to backend (Railway/Render)
-# Update the URL after backend deployment
+# Netlify Functions untuk backend
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["backend/**"]
+
+# Redirect API calls ke Netlify Functions
 [[redirects]]
   from = "/api/*"
-  to = "https://your-backend.railway.app/api/:splat"
+  to = "/.netlify/functions/api"
   status = 200
   force = true
-
-# Next.js rewrites (handled automatically by Next.js)
-# No need for additional redirects for frontend routes
