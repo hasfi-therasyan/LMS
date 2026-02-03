@@ -10,6 +10,7 @@ process.env.VERCEL = '1';
 
 // Import the Express app from local _src directory
 // Using _src to prevent Vercel from detecting it as a serverless function
+// @ts-ignore - Vercel type checking may not resolve this path correctly
 import app from './_src/index';
 
 // Export the Express app as a serverless function
