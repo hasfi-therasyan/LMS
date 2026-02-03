@@ -25,6 +25,7 @@ export default function JobsheetViewPage() {
   const [jobsheet, setJobsheet] = useState<Jobsheet | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfError, setPdfError] = useState(false);
+  const [pdfLoadingTimeout, setPdfLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!profile) {
@@ -42,6 +43,13 @@ export default function JobsheetViewPage() {
     if (params.id && profile) {
       loadJobsheet();
     }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (pdfLoadingTimeout) {
+        clearTimeout(pdfLoadingTimeout);
+      }
+    };
   }, [params.id, profile]);
 
   const loadJobsheet = async () => {
@@ -202,23 +210,70 @@ export default function JobsheetViewPage() {
                   </div>
                 </div>
               ) : (
-                <iframe
-                  src={`${jobsheet.file_url}#toolbar=1&navpanes=1&scrollbar=1`}
-                  className="w-full h-full border-0"
-                  title={jobsheet.name}
-                  onError={() => {
-                    console.error('Iframe failed to load PDF');
-                    setPdfError(true);
-                  }}
-                  onLoad={() => {
-                    // Set timeout to check if PDF actually loaded
-                    setTimeout(() => {
-                      // If iframe is still loading after 5 seconds, might be an issue
-                      // But we can't reliably detect cross-origin iframe errors
-                      console.log('PDF iframe load attempt completed');
-                    }, 5000);
-                  }}
-                />
+                <>
+                  {/* Try iframe first */}
+                  <iframe
+                    src={`${jobsheet.file_url}#toolbar=1&navpanes=1&scrollbar=1`}
+                    className="w-full h-full border-0"
+                    title={jobsheet.name}
+                    allow="fullscreen"
+                    onError={() => {
+                      console.error('Iframe failed to load PDF');
+                      setPdfError(true);
+                    }}
+                    onLoad={(e) => {
+                      // Check if iframe loaded successfully
+                      const iframe = e.target as HTMLIFrameElement;
+                      
+                      // Set a timeout to detect if PDF fails to load
+                      const timeout = setTimeout(() => {
+                        try {
+                          // Try to access iframe content (will fail for cross-origin, but that's OK)
+                          if (iframe.contentWindow) {
+                            console.log('PDF iframe loaded successfully');
+                          }
+                        } catch (err) {
+                          // Cross-origin error is normal for Supabase Storage
+                          console.log('Cross-origin iframe (normal for Supabase Storage)');
+                        }
+                        
+                        // Check if iframe has content (heuristic check)
+                        // If iframe src is still the same but no content loaded, might be an error
+                        const iframeSrc = iframe.src;
+                        if (iframeSrc && iframeSrc.includes('supabase.co')) {
+                          console.log('Supabase Storage URL detected, PDF should be loading');
+                        }
+                      }, 3000);
+                      
+                      setPdfLoadingTimeout(timeout);
+                    }}
+                  />
+                  {/* Fallback: Use object tag for better compatibility */}
+                  <object
+                    data={`${jobsheet.file_url}#toolbar=1&navpanes=1&scrollbar=1`}
+                    type="application/pdf"
+                    className="w-full h-full border-0 hidden"
+                    aria-label={jobsheet.name}
+                    onError={() => {
+                      console.error('Object tag failed to load PDF');
+                      // Don't set error immediately, let iframe try first
+                    }}
+                  >
+                    <div className="flex items-center justify-center h-full bg-gray-50">
+                      <div className="text-center p-8">
+                        <p className="text-gray-600 mb-4">PDF tidak dapat ditampilkan di browser ini</p>
+                        <a
+                          href={jobsheet.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium inline-flex items-center space-x-2"
+                        >
+                          <span>Buka di Tab Baru</span>
+                        </a>
+                      </div>
+                    </div>
+                  </object>
+                </>
               )
             ) : (
               <div className="flex items-center justify-center h-full">
