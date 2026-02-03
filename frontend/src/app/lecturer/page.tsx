@@ -390,7 +390,7 @@ export default function LecturerDashboard() {
           loadData();
         }}
         onSuccess={loadData}
-        modules={modules}
+        classes={jobsheets}
       />
 
       {selectedQuiz && (

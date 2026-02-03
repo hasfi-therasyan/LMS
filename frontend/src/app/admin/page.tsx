@@ -885,12 +885,12 @@ export default function AdminDashboard() {
                     )}
 
                     {/* Assignment Submissions */}
-                    {student.assignments.filter(a => a.grade !== null).length > 0 && (
+                    {student.assignments.filter((a: any) => a.grade !== null).length > 0 && (
                       <div>
                         <h3 className="text-lg font-bold text-gray-900 mb-4">Assignment Submissions</h3>
                         <div className="space-y-3">
                           {student.assignments
-                            .filter(a => a.grade !== null)
+                            .filter((a: any) => a.grade !== null)
                             .map((assignment: any) => {
                               const percentage = assignment.grade as number;
                               return (
@@ -929,7 +929,7 @@ export default function AdminDashboard() {
                       </div>
                     )}
 
-                    {student.quizSubmissions.length === 0 && student.assignments.filter(a => a.grade !== null).length === 0 && (
+                    {student.quizSubmissions.length === 0 && student.assignments.filter((a: any) => a.grade !== null).length === 0 && (
                       <div className="card text-center py-8">
                         <p className="text-gray-500">No submissions available for this student.</p>
                       </div>
@@ -947,6 +947,9 @@ export default function AdminDashboard() {
         <CreateJobsheetModal
           isOpen={showCreateJobsheet}
           onClose={() => {
+            setShowCreateJobsheet(false);
+          }}
+          onSuccess={() => {
             setShowCreateJobsheet(false);
             loadData();
           }}
