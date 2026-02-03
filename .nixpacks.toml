@@ -1,0 +1,18 @@
+# Root nixpacks.toml - Railway will use this if Root Directory is not set
+# But we recommend setting Root Directory = frontend in Railway Dashboard
+
+[phases.setup]
+nixPkgs = ["nodejs-20_x"]
+
+[phases.install]
+cmds = [
+  "cd frontend && npm install --include=dev"
+]
+
+[phases.build]
+cmds = [
+  "cd frontend && npm run build"
+]
+
+[start]
+cmd = "cd frontend && npm start"
