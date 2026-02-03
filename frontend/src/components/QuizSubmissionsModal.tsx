@@ -42,9 +42,11 @@ export default function QuizSubmissionsModal({
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     if (isOpen && quizId) {
+      setSearchQuery(''); // Reset search when modal opens
       loadData();
     }
   }, [isOpen, quizId]);
@@ -65,6 +67,91 @@ export default function QuizSubmissionsModal({
     }
   };
 
+  const handleExportToExcel = () => {
+    try {
+      // Prepare data for export
+      const exportData: any[] = [];
+      
+      // Add header row
+      exportData.push([
+        'No',
+        'Student Name',
+        'Email',
+        'Score',
+        'Total Points',
+        'Percentage',
+        'Submitted Date',
+        'Correct Answers',
+        'Total Questions'
+      ]);
+
+      // Add data rows
+      let rowNumber = 1;
+      filteredSubmissions.forEach((submission) => {
+        const correctCount = submission.answers.filter(a => a.is_correct).length;
+        const totalQuestions = submission.answers.length;
+        const percentage = Math.round((submission.score / submission.total_points) * 100);
+        
+        exportData.push([
+          rowNumber++,
+          submission.profiles.full_name || '',
+          submission.profiles.email || '',
+          submission.score,
+          submission.total_points,
+          `${percentage}%`,
+          new Date(submission.submitted_at).toLocaleString(),
+          correctCount,
+          totalQuestions
+        ]);
+      });
+
+      // Convert to CSV format
+      const csvContent = exportData.map(row => {
+        return row.map(cell => {
+          // Escape quotes and wrap in quotes if contains comma, quote, or newline
+          const cellStr = String(cell || '');
+          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return `"${cellStr.replace(/"/g, '""')}"`;
+          }
+          return cellStr;
+        }).join(',');
+      }).join('\n');
+
+      // Add BOM for Excel UTF-8 support
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      // Create download link
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = `Quiz_Submissions_${quizTitle.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Excel file exported successfully!');
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast.error('Failed to export to Excel');
+    }
+  };
+
+  // Filter submissions based on search query
+  const filteredSubmissions = submissions.filter((submission) => {
+    if (!searchQuery.trim()) return true;
+    
+    const searchLower = searchQuery.toLowerCase().trim();
+    const studentName = submission.profiles.full_name?.toLowerCase() || '';
+    const studentEmail = submission.profiles.email?.toLowerCase() || '';
+    
+    return (
+      studentName.includes(searchLower) ||
+      studentEmail.includes(searchLower)
+    );
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -76,13 +163,56 @@ export default function QuizSubmissionsModal({
               <h2 className="text-2xl font-bold">{quizTitle}</h2>
               <p className="text-gray-600">Submissions & Analytics</p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
-            >
-              ×
-            </button>
+            <div className="flex items-center space-x-3">
+              {!loading && filteredSubmissions.length > 0 && (
+                <button
+                  onClick={handleExportToExcel}
+                  className="flex items-center space-x-2 px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors text-sm font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Export to Excel</span>
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 text-2xl transition-colors"
+              >
+                ×
+              </button>
+            </div>
           </div>
+
+          {/* Search Bar */}
+          {!loading && submissions.length > 0 && (
+            <div className="mb-6">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input-field w-full pl-10 pr-4"
+                  placeholder="Search by student name or email..."
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {analytics && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -110,13 +240,15 @@ export default function QuizSubmissionsModal({
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading submissions...</p>
             </div>
-          ) : submissions.length === 0 ? (
+          ) : filteredSubmissions.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-600">No submissions yet.</p>
+              <p className="text-gray-600">
+                {searchQuery ? 'No submissions found matching your search.' : 'No submissions yet.'}
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {submissions.map((submission) => (
+              {filteredSubmissions.map((submission) => (
                 <div
                   key={submission.id}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"

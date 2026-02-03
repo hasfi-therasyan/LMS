@@ -179,17 +179,59 @@ router.get(
             id,
             title,
             description,
-            modules (
-              id,
-              title,
-              classes (
-                code,
-                name
-              )
+            classes (
+              code,
+              name
             )
           )
         `)
         .eq('student_id', req.user!.id)
+        .order('submitted_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      res.json(submissions || []);
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Failed to fetch submissions',
+        message: error.message
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/submissions/all
+ * Get all quiz submissions for admin (grouped by student)
+ */
+router.get(
+  '/all',
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      // Get all quiz submissions with student and quiz info
+      const { data: submissions, error } = await supabase
+        .from('quiz_submissions')
+        .select(`
+          *,
+          profiles (
+            id,
+            full_name,
+            email
+          ),
+          quizzes (
+            id,
+            title,
+            description,
+            classes (
+              code,
+              name
+            )
+          )
+        `)
         .order('submitted_at', { ascending: false });
 
       if (error) {

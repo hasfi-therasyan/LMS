@@ -108,12 +108,46 @@ router.post(
         throw questionsError;
       }
 
-      // Build AI context with all quiz questions
+      // Get class extracted text for module context
+      // This text was extracted from classes.file_url (PDF) when quiz was created
+      const quiz = submission.quizzes as any;
+      let classData = null;
+      
+      if (quiz?.class_id) {
+        console.log(`Fetching extracted text from classes table for class_id: ${quiz.class_id}`);
+        const { data, error: classError } = await supabase
+          .from('classes')
+          .select('extracted_text, file_url')
+          .eq('id', quiz.class_id)
+          .single();
+        
+        if (classError) {
+          console.error('Error fetching class data:', classError);
+          // Continue without extracted text if class not found
+        } else {
+          classData = data;
+          if (classData?.extracted_text) {
+            console.log(`✓ Found extracted text (${classData.extracted_text.length} characters) from classes.file_url: ${classData.file_url}`);
+          } else {
+            console.warn(`⚠ No extracted_text found for class_id: ${quiz.class_id}. The PDF may not have been processed yet.`);
+          }
+        }
+      } else {
+        console.warn('Quiz has no class_id, continuing without extracted text');
+      }
+
+      // Find question number
+      const questionIndex = allQuestions?.findIndex(q => q.question_text === question.question_text) ?? -1;
+      const questionNumber = questionIndex >= 0 ? questionIndex + 1 : 1;
+
+      // Build AI context with all quiz questions and extracted module text
       const context = buildAIContext(
         allQuestions || [],
         question.question_text,
         answer.student_answer,
-        question.correct_answer
+        question.correct_answer,
+        classData?.extracted_text || null,
+        questionNumber
       );
 
       // Create chat session
@@ -132,7 +166,17 @@ router.post(
       }
 
       // Generate initial AI response
-      const aiResponse = await generateAIResponse(context, []);
+      let aiResponse: string;
+      try {
+        console.log('Generating AI response with context length:', context.length);
+        aiResponse = await generateAIResponse(context, []);
+        console.log('AI response generated successfully, length:', aiResponse.length);
+      } catch (aiError: any) {
+        console.error('Error generating AI response:', aiError);
+        // Delete the session if AI generation fails
+        await supabase.from('ai_chat_sessions').delete().eq('id', session.id);
+        throw new Error(`Failed to generate AI response: ${aiError.message || 'Unknown error'}`);
+      }
 
       // Store initial AI message
       const { data: aiMessage, error: msgError } = await supabase
@@ -146,6 +190,8 @@ router.post(
         .single();
 
       if (msgError) {
+        // Clean up session if message storage fails
+        await supabase.from('ai_chat_sessions').delete().eq('id', session.id);
         throw msgError;
       }
 
@@ -155,6 +201,8 @@ router.post(
         messages: [aiMessage]
       });
     } catch (error: any) {
+      console.error('Error in /chat/start:', error);
+      
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Validation error',
@@ -164,7 +212,8 @@ router.post(
 
       res.status(500).json({
         error: 'Failed to start chat session',
-        message: error.message
+        message: error.message || 'An unexpected error occurred',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }
@@ -252,12 +301,58 @@ router.post(
         throw questionsError;
       }
 
-      // Build context with all quiz questions
-      const context = buildAIContext(
+      // Get class extracted text for module context
+      // This text was extracted from classes.file_url (PDF) when quiz was created
+      let classData = null;
+      
+      if (quiz?.class_id) {
+        console.log(`Fetching extracted text from classes table for class_id: ${quiz.class_id}`);
+        const { data, error: classError } = await supabase
+          .from('classes')
+          .select('extracted_text, file_url')
+          .eq('id', quiz.class_id)
+          .single();
+        
+        if (classError) {
+          console.error('Error fetching class data:', classError);
+          // Continue without extracted text if class not found
+        } else {
+          classData = data;
+          if (classData?.extracted_text) {
+            console.log(`✓ Found extracted text (${classData.extracted_text.length} characters) from classes.file_url: ${classData.file_url}`);
+          } else {
+            console.warn(`⚠ No extracted_text found for class_id: ${quiz.class_id}. The PDF may not have been processed yet.`);
+          }
+        }
+      } else {
+        console.warn('Quiz has no class_id, continuing without extracted text');
+      }
+
+      // Find question number
+      const questionIndex = allQuestions?.findIndex(q => q.question_text === question.question_text) ?? -1;
+      const questionNumber = questionIndex >= 0 ? questionIndex + 1 : 1;
+
+      // Check if user's message contains the correct answer
+      // This helps the AI detect when student has understood
+      const correctAnswer = question.correct_answer;
+      const userMessageUpper = content.toUpperCase().trim();
+      const correctAnswerDetected = 
+        userMessageUpper === correctAnswer ||
+        userMessageUpper.includes(`ANSWER IS ${correctAnswer}`) ||
+        userMessageUpper.includes(`THE ANSWER IS ${correctAnswer}`) ||
+        userMessageUpper.includes(`IT'S ${correctAnswer}`) ||
+        userMessageUpper.includes(`IT IS ${correctAnswer}`) ||
+        userMessageUpper.includes(`CORRECT ANSWER IS ${correctAnswer}`) ||
+        (userMessageUpper.length === 1 && userMessageUpper === correctAnswer);
+
+      // Build context with all quiz questions and extracted module text
+      let context = buildAIContext(
         allQuestions || [],
         question.question_text,
         answer?.student_answer || 'No answer',
-        question.correct_answer
+        question.correct_answer,
+        classData?.extracted_text || null,
+        questionNumber
       );
 
       // Build conversation history for AI
@@ -272,8 +367,33 @@ router.post(
         content
       });
 
+      // Add special instruction if correct answer detected
+      if (correctAnswerDetected) {
+        context += `\n\n🎯 PENTING: Mahasiswa baru saja memberikan JAWABAN YANG BENAR (${correctAnswer}) dalam pesan mereka!
+        
+        Anda HARUS:
+        1. Segera puji mereka dengan antusias: "Bagus sekali! Jawabanmu benar!" atau "Luar biasa! Kamu sudah memahaminya!"
+        2. Konfirmasi pemahaman mereka: "Kamu telah menunjukkan bahwa kamu memahami konsepnya dengan benar."
+        3. Tanyakan apakah ada pertanyaan lain: "Apakah ada hal lain yang ingin kamu tanyakan tentang topik ini atau pertanyaan lainnya?"
+        4. Bersikaplah hangat, mendorong, dan rayakan kesuksesan mereka
+        5. Selalu akhiri dengan menanyakan apakah mereka membutuhkan bantuan dengan pertanyaan lain
+        
+        Ini adalah momen sukses - buat mereka merasa bangga dengan pemahaman mereka!
+        
+        WAJIB: Gunakan BAHASA INDONESIA dalam respons Anda.`;
+        console.log(`✓ Detected correct answer (${correctAnswer}) in user message`);
+      }
+
       // Generate AI response
-      const aiResponseContent = await generateAIResponse(context, conversationHistory);
+      let aiResponseContent: string;
+      try {
+        console.log('Generating AI response for session:', sessionId);
+        aiResponseContent = await generateAIResponse(context, conversationHistory);
+        console.log('AI response generated successfully');
+      } catch (aiError: any) {
+        console.error('Error generating AI response:', aiError);
+        throw new Error(`Failed to generate AI response: ${aiError.message || 'Unknown error'}`);
+      }
 
       // Store AI response
       const { data: aiMessage, error: aiMsgError } = await supabase
@@ -302,6 +422,8 @@ router.post(
         aiMessage
       });
     } catch (error: any) {
+      console.error('Error in /chat/:sessionId/message:', error);
+      
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           error: 'Validation error',
@@ -311,7 +433,8 @@ router.post(
 
       res.status(500).json({
         error: 'Failed to send message',
-        message: error.message
+        message: error.message || 'An unexpected error occurred',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }

@@ -11,6 +11,7 @@ import QuizSubmissionsModal from '@/components/QuizSubmissionsModal';
 import ViewAssignmentsModal from '@/components/ViewAssignmentsModal';
 import LMSLayout from '@/components/LMSLayout';
 import StatCard from '@/components/StatCard';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
 interface User {
   id: string;
@@ -35,21 +36,11 @@ interface Quiz {
   title: string;
   description: string;
   created_at: string;
-  modules: {
+  classes: {
     id: string;
-    title: string;
-    classes: {
-      id: string;
-      name: string;
-      code: string;
-    };
+    name: string;
+    code: string;
   };
-}
-
-interface Module {
-  id: string;
-  title: string;
-  class_id: string;
 }
 
 export default function AdminDashboard() {
@@ -58,8 +49,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [jobsheets, setJobsheets] = useState<Jobsheet[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [modules, setModules] = useState<Module[]>([]);
-  const [activeSection, setActiveSection] = useState<'overview' | 'users' | 'jobsheets' | 'quizzes'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'users' | 'jobsheets' | 'quizzes' | 'grades'>('overview');
   const [allAssignments, setAllAssignments] = useState<any[]>([]);
   const [groupedAssignments, setGroupedAssignments] = useState<any[]>([]);
   const [showCreateJobsheet, setShowCreateJobsheet] = useState(false);
@@ -68,6 +58,9 @@ export default function AdminDashboard() {
   const [showViewAssignments, setShowViewAssignments] = useState(false);
   const [selectedJobsheetForAssignments, setSelectedJobsheetForAssignments] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [studentGrades, setStudentGrades] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [showStudentDetail, setShowStudentDetail] = useState(false);
 
   // Listen to hash changes
   useEffect(() => {
@@ -77,13 +70,13 @@ export default function AdminDashboard() {
     }
     
     const hash = window.location.hash.replace('#', '') || 'overview';
-    if (['overview', 'users', 'jobsheets', 'quizzes'].includes(hash)) {
+    if (['overview', 'users', 'jobsheets', 'quizzes', 'grades'].includes(hash)) {
       setActiveSection(hash as any);
     }
 
     const handleHashChange = () => {
       const newHash = window.location.hash.replace('#', '') || 'overview';
-      if (['overview', 'users', 'jobsheets', 'quizzes'].includes(newHash)) {
+      if (['overview', 'users', 'jobsheets', 'quizzes', 'grades'].includes(newHash)) {
         setActiveSection(newHash as any);
       }
     };
@@ -109,26 +102,100 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [usersRes, jobsheetsRes, quizzesRes, modulesRes, assignmentsRes] = await Promise.allSettled([
+      const [usersRes, jobsheetsRes, quizzesRes, assignmentsRes, submissionsRes] = await Promise.allSettled([
         apiClient.getUsers(),
         apiClient.getJobsheets(),
         apiClient.getQuizzes(),
-        apiClient.getModules(),
-        apiClient.getAllAssignments()
+        apiClient.getAllAssignments(),
+        apiClient.getAllSubmissions()
       ]);
       
       if (usersRes.status === 'fulfilled') setUsers(usersRes.value.data);
       if (jobsheetsRes.status === 'fulfilled') setJobsheets(jobsheetsRes.value.data);
       if (quizzesRes.status === 'fulfilled') setQuizzes(quizzesRes.value.data);
-      if (modulesRes.status === 'fulfilled') setModules(modulesRes.value.data);
       if (assignmentsRes.status === 'fulfilled') {
         setAllAssignments(assignmentsRes.value.data.assignments || []);
         setGroupedAssignments(assignmentsRes.value.data.groupedByStudent || []);
+      }
+      
+      // Load student grades after getting users and assignments
+      if (usersRes.status === 'fulfilled' && assignmentsRes.status === 'fulfilled' && submissionsRes.status === 'fulfilled') {
+        await loadStudentGrades(usersRes.value.data, assignmentsRes.value.data.assignments || [], submissionsRes.value.data || []);
+      } else {
+        // Log errors for debugging
+        if (usersRes.status === 'rejected') console.error('Failed to load users:', usersRes.reason);
+        if (assignmentsRes.status === 'rejected') console.error('Failed to load assignments:', assignmentsRes.reason);
+        if (submissionsRes.status === 'rejected') console.error('Failed to load submissions:', submissionsRes.reason);
       }
     } catch (error: any) {
       toast.error('Failed to load data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStudentGrades = async (usersData: User[], assignmentsData: any[], submissionsData: any[]) => {
+    try {
+      console.log('Loading student grades...', { 
+        usersCount: usersData.length, 
+        assignmentsCount: assignmentsData.length, 
+        submissionsCount: submissionsData.length 
+      });
+      
+      // Get all students (mahasiswa role)
+      const students = usersData.filter(u => u.role === 'mahasiswa');
+      console.log('Found students:', students.length);
+      
+      // For each student, get their submissions and assignments
+      const studentGradesData = students.map((student) => {
+        // Get quiz submissions for this student
+        const studentSubmissions = submissionsData.filter((s: any) => s.student_id === student.id);
+        
+        // Get assignments for this student
+        const studentAssignments = assignmentsData.filter(a => a.student_id === student.id);
+        
+        // Calculate statistics
+        const quizScores = studentSubmissions.map((s: any) => ({
+          score: Math.round((s.score / s.total_points) * 100),
+          quizTitle: s.quizzes?.title || 'Quiz',
+          date: new Date(s.submitted_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+          dateValue: new Date(s.submitted_at).getTime()
+        }));
+        
+        const assignmentScores = studentAssignments
+          .filter(a => a.grade !== null)
+          .map(a => ({
+            score: a.grade as number,
+            assignmentName: a.classes?.name || a.file_name || 'Assignment',
+            date: new Date(a.graded_at || a.uploaded_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+            dateValue: new Date(a.graded_at || a.uploaded_at).getTime()
+          }));
+        
+        const allScores = [...quizScores, ...assignmentScores].sort((a, b) => a.dateValue - b.dateValue);
+        const averageScore = allScores.length > 0
+          ? Math.round(allScores.reduce((sum, s) => sum + s.score, 0) / allScores.length)
+          : 0;
+        
+        return {
+          id: student.id,
+          name: student.full_name,
+          email: student.email,
+          quizSubmissions: studentSubmissions,
+          assignments: studentAssignments,
+          quizScores,
+          assignmentScores,
+          allScores,
+          averageScore,
+          totalQuizzes: studentSubmissions.length,
+          totalAssignments: studentAssignments.filter(a => a.grade !== null).length
+        };
+      });
+      
+      setStudentGrades(studentGradesData);
+      console.log('✅ Student grades loaded:', studentGradesData.length, studentGradesData);
+    } catch (error: any) {
+      console.error('❌ Error loading student grades:', error);
+      toast.error('Failed to load student grades');
     }
   };
 
@@ -213,6 +280,15 @@ export default function AdminDashboard() {
         </svg>
       ),
       badge: quizzes.length,
+    },
+    {
+      name: 'Grades',
+      href: '/admin#grades',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+      ),
     },
   ];
 
@@ -572,11 +648,11 @@ export default function AdminDashboard() {
                       </svg>
                     </div>
                     <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                      {quiz.modules.classes.code}
+                      {quiz.classes?.code || 'N/A'}
                     </span>
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{quiz.title}</h3>
-                  <p className="text-sm text-gray-500 mb-3">{quiz.modules.title}</p>
+                  <p className="text-sm text-gray-500 mb-3">{quiz.classes?.name || 'No class'}</p>
                   {quiz.description && (
                     <p className="text-sm text-gray-600 mb-4 line-clamp-2">{quiz.description}</p>
                   )}
@@ -601,6 +677,271 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Grades Section */}
+      {activeSection === 'grades' && (
+        <div className="animate-fade-in">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Student Grades</h2>
+            <p className="text-sm text-gray-600">View student progress, submissions, and grades</p>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading grades...</p>
+            </div>
+          ) : studentGrades.length === 0 ? (
+            <div className="card text-center py-12">
+              <p className="text-gray-500 mb-2">No student grades available yet.</p>
+              <p className="text-sm text-gray-400">Make sure students have submitted quizzes or assignments.</p>
+              <p className="text-xs text-gray-400 mt-2">Check browser console (F12) for debugging information.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Overall Statistics */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="card p-4">
+                  <p className="text-sm text-gray-600">Total Students</p>
+                  <p className="text-2xl font-bold text-gray-900">{studentGrades.length}</p>
+                </div>
+                <div className="card p-4">
+                  <p className="text-sm text-gray-600">Students with Quizzes</p>
+                  <p className="text-2xl font-bold text-primary-600">
+                    {studentGrades.filter(s => s.totalQuizzes > 0).length}
+                  </p>
+                </div>
+                <div className="card p-4">
+                  <p className="text-sm text-gray-600">Students with Assignments</p>
+                  <p className="text-2xl font-bold text-success-600">
+                    {studentGrades.filter(s => s.totalAssignments > 0).length}
+                  </p>
+                </div>
+                <div className="card p-4">
+                  <p className="text-sm text-gray-600">Average Score (All)</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {studentGrades.length > 0
+                      ? Math.round(
+                          studentGrades.reduce((sum, s) => sum + s.averageScore, 0) / studentGrades.length
+                        )
+                      : 0}%
+                  </p>
+                </div>
+              </div>
+
+              {/* Student List */}
+              <div className="card">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Student List</h3>
+                <div className="space-y-4">
+                  {studentGrades.map((student) => (
+                    <div
+                      key={student.id}
+                      onClick={() => {
+                        setSelectedStudent({ id: student.id, name: student.name, email: student.email });
+                        setShowStudentDetail(true);
+                      }}
+                      className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-primary-300 cursor-pointer transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{student.name}</h4>
+                          <p className="text-sm text-gray-600">{student.email}</p>
+                        </div>
+                        <div className="flex items-center space-x-6">
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">Quizzes</p>
+                            <p className="text-lg font-bold text-primary-600">{student.totalQuizzes}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">Assignments</p>
+                            <p className="text-lg font-bold text-success-600">{student.totalAssignments}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-gray-500">Average</p>
+                            <p className={`text-lg font-bold ${
+                              student.averageScore >= 70 ? 'text-success-600' :
+                              student.averageScore >= 50 ? 'text-warning-600' :
+                              'text-gray-600'
+                            }`}>
+                              {student.averageScore}%
+                            </p>
+                          </div>
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Student Detail Modal */}
+      {showStudentDetail && selectedStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedStudent.name}</h2>
+                  <p className="text-gray-600">{selectedStudent.email}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowStudentDetail(false);
+                    setSelectedStudent(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+
+              {(() => {
+                const student = studentGrades.find(s => s.id === selectedStudent.id);
+                if (!student) return <p className="text-gray-500">Student data not found.</p>;
+
+                return (
+                  <div className="space-y-6">
+                    {/* Statistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="card p-4">
+                        <p className="text-sm text-gray-600">Total Quizzes</p>
+                        <p className="text-2xl font-bold text-primary-600">{student.totalQuizzes}</p>
+                      </div>
+                      <div className="card p-4">
+                        <p className="text-sm text-gray-600">Total Assignments</p>
+                        <p className="text-2xl font-bold text-success-600">{student.totalAssignments}</p>
+                      </div>
+                      <div className="card p-4">
+                        <p className="text-sm text-gray-600">Average Score</p>
+                        <p className={`text-2xl font-bold ${
+                          student.averageScore >= 70 ? 'text-success-600' :
+                          student.averageScore >= 50 ? 'text-warning-600' :
+                          'text-gray-600'
+                        }`}>
+                          {student.averageScore}%
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Grade Chart */}
+                    {student.allScores.length > 0 && (
+                      <div className="card">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Grade Trend</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={student.allScores}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" fontSize={12} />
+                            <YAxis domain={[0, 100]} label={{ value: 'Score (%)', angle: -90, position: 'insideLeft' }} />
+                            <Tooltip formatter={(value: number) => [`${value}%`, 'Score']} />
+                            <Legend />
+                            <Line type="monotone" dataKey="score" name="Score (%)" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+
+                    {/* Quiz Submissions */}
+                    {student.quizSubmissions.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Quiz Submissions</h3>
+                        <div className="space-y-3">
+                          {student.quizSubmissions.map((submission: any) => {
+                            const percentage = Math.round((submission.score / submission.total_points) * 100);
+                            return (
+                              <div key={submission.id} className="card p-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-semibold text-gray-900">{submission.quizzes?.title || 'Quiz'}</p>
+                                    <p className="text-sm text-gray-600">
+                                      {submission.quizzes?.classes?.code || 'N/A'} - {submission.quizzes?.classes?.name || 'No class'}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-bold text-lg">
+                                      {submission.score} / {submission.total_points}
+                                    </p>
+                                    <p className={`text-sm font-medium ${
+                                      percentage >= 70 ? 'text-success-600' :
+                                      percentage >= 50 ? 'text-warning-600' :
+                                      'text-gray-600'
+                                    }`}>
+                                      {percentage}%
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {new Date(submission.submitted_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Assignment Submissions */}
+                    {student.assignments.filter(a => a.grade !== null).length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Assignment Submissions</h3>
+                        <div className="space-y-3">
+                          {student.assignments
+                            .filter(a => a.grade !== null)
+                            .map((assignment: any) => {
+                              const percentage = assignment.grade as number;
+                              return (
+                                <div key={assignment.id} className="card p-4">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="font-semibold text-gray-900">
+                                        {assignment.classes?.name || assignment.file_name || 'Assignment'}
+                                      </p>
+                                      <p className="text-sm text-gray-600">
+                                        {assignment.classes?.code || 'N/A'} - {assignment.file_name}
+                                      </p>
+                                      {assignment.feedback && (
+                                        <p className="text-sm text-gray-700 mt-1">{assignment.feedback}</p>
+                                      )}
+                                    </div>
+                                    <div className="text-right">
+                                      <p className={`text-lg font-bold ${
+                                        percentage >= 70 ? 'text-success-600' :
+                                        percentage >= 50 ? 'text-warning-600' :
+                                        'text-gray-600'
+                                      }`}>
+                                        {percentage}%
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        {assignment.graded_at
+                                          ? new Date(assignment.graded_at).toLocaleDateString()
+                                          : new Date(assignment.uploaded_at).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+
+                    {student.quizSubmissions.length === 0 && student.assignments.filter(a => a.grade !== null).length === 0 && (
+                      <div className="card text-center py-8">
+                        <p className="text-gray-500">No submissions available for this student.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modals */}
       {showCreateJobsheet && (
         <CreateJobsheetModal
@@ -620,7 +961,7 @@ export default function AdminDashboard() {
             loadData();
           }}
           onSuccess={loadData}
-          modules={modules}
+          classes={jobsheets}
         />
       )}
 

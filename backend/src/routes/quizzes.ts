@@ -7,16 +7,37 @@
 import express from 'express';
 import { authenticate, requireRole } from '../middleware/auth';
 import { supabase } from '../config/supabase';
+import { extractTextFromPDF } from '../utils/pdfExtractor';
 import { z } from 'zod';
+import https from 'https';
+import http from 'http';
 
 const router = express.Router();
 
 /**
+ * Helper function to download PDF from URL and extract text
+ */
+async function downloadAndExtractText(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download PDF: ${response.statusText}`);
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    return await extractTextFromPDF(buffer);
+  } catch (error) {
+    console.error('Error downloading/extracting PDF:', error);
+    return null;
+  }
+}
+
+/**
  * POST /api/quizzes
  * Create a new quiz (Admin/Dosen only)
+ * Now based on classes instead of modules
  */
 const createQuizSchema = z.object({
-  moduleId: z.string().uuid(),
+  classId: z.string().uuid(),
   title: z.string().min(1),
   description: z.string().optional(),
   timeLimit: z.number().positive().optional(),
@@ -27,7 +48,8 @@ const createQuizSchema = z.object({
       optionB: z.string().min(1),
       optionC: z.string().min(1),
       optionD: z.string().min(1),
-      correctAnswer: z.enum(['A', 'B', 'C', 'D']),
+      optionE: z.string().min(1),
+      correctAnswer: z.enum(['A', 'B', 'C', 'D', 'E']),
       points: z.number().positive().default(1),
       orderIndex: z.number().int().nonnegative()
     })
@@ -40,24 +62,23 @@ router.post(
   requireRole('admin'),
   async (req, res) => {
     try {
-      const { moduleId, title, description, timeLimit, questions } = createQuizSchema.parse(req.body);
+      const { classId, title, description, timeLimit, questions } = createQuizSchema.parse(req.body);
 
-      // Verify module exists and belongs to lecturer
-      const { data: module, error: moduleError } = await supabase
-        .from('modules')
-        .select('*, classes(*)')
-        .eq('id', moduleId)
+      // Verify class exists and belongs to admin
+      const { data: classData, error: classError } = await supabase
+        .from('classes')
+        .select('*')
+        .eq('id', classId)
         .single();
 
-      if (moduleError || !module) {
+      if (classError || !classData) {
         return res.status(404).json({
           error: 'Not found',
-          message: 'Module not found'
+          message: 'Class not found'
         });
       }
 
       // Check if admin owns the class
-      const classData = module.classes as any;
       if (classData.admin_id !== req.user!.id) {
         return res.status(403).json({
           error: 'Forbidden',
@@ -65,11 +86,43 @@ router.post(
         });
       }
 
+      // Extract text from class file_url if available
+      // This extracted text will be stored in classes.extracted_text and used by AI chatbot
+      // IMPORTANT: Only extract if extracted_text doesn't exist yet (avoid re-extraction)
+      if (classData.file_url) {
+        if (!classData.extracted_text) {
+          // Only extract if extracted_text is null/empty
+          console.log(`📄 Extracting text from class PDF (file_url): ${classData.file_url}`);
+          const extractedText = await downloadAndExtractText(classData.file_url);
+          if (extractedText) {
+            console.log(`✓ Successfully extracted ${extractedText.length} characters from PDF`);
+            // Store extracted text in classes.extracted_text for AI chatbot to use as context
+            const { error: updateError } = await supabase
+              .from('classes')
+              .update({ extracted_text: extractedText })
+              .eq('id', classId);
+            
+            if (updateError) {
+              console.error('Failed to save extracted text to database:', updateError);
+            } else {
+              console.log(`✓ Saved extracted text to classes.extracted_text for class_id: ${classId}`);
+            }
+          } else {
+            console.warn('⚠ Failed to extract text from PDF, continuing without extracted text');
+          }
+        } else {
+          // Extracted text already exists, reuse it
+          console.log(`✓ Using existing extracted_text (${classData.extracted_text.length} characters) from classes table. No re-extraction needed.`);
+        }
+      } else {
+        console.warn('⚠ Class has no file_url, quiz created without extracted text. AI chatbot will work without module context.');
+      }
+
       // Create quiz
       const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
         .insert({
-          module_id: moduleId,
+          class_id: classId,
           title,
           description: description || null,
           time_limit: timeLimit || null,
@@ -90,6 +143,7 @@ router.post(
         option_b: q.optionB,
         option_c: q.optionC,
         option_d: q.optionD,
+        option_e: q.optionE,
         correct_answer: q.correctAnswer,
         points: q.points,
         order_index: q.orderIndex
@@ -137,15 +191,10 @@ router.get('/', authenticate, async (req, res) => {
   try {
     let query = supabase.from('quizzes').select(`
       *,
-      modules (
+      classes (
         id,
-        title,
-        class_id,
-        classes (
-          id,
-          name,
-          code
-        )
+        name,
+        code
       )
     `);
 
@@ -161,18 +210,7 @@ router.get('/', authenticate, async (req, res) => {
 
       if (classes && classes.length > 0) {
         const classIds = classes.map(c => c.id);
-
-        const { data: modules } = await supabase
-          .from('modules')
-          .select('id')
-          .in('class_id', classIds);
-
-        if (modules && modules.length > 0) {
-          const moduleIds = modules.map(m => m.id);
-          query = query.in('module_id', moduleIds);
-        } else {
-          return res.json([]);
-        }
+        query = query.in('class_id', classIds);
       } else {
         return res.json([]);
       }
@@ -196,6 +234,7 @@ router.get('/', authenticate, async (req, res) => {
 /**
  * GET /api/quizzes/:id
  * Get a specific quiz with questions
+ * For mahasiswa: Also checks if they already submitted and returns submission if exists
  */
 router.get('/:id', authenticate, async (req, res) => {
   try {
@@ -203,15 +242,10 @@ router.get('/:id', authenticate, async (req, res) => {
       .from('quizzes')
       .select(`
         *,
-        modules (
+        classes (
           id,
-          title,
-          class_id,
-          classes (
-            id,
-            name,
-            code
-          )
+          name,
+          code
         )
       `)
       .eq('id', req.params.id)
@@ -235,8 +269,79 @@ router.get('/:id', authenticate, async (req, res) => {
       throw questionsError;
     }
 
-      // For mahasiswa, hide correct answers
-      if (req.user!.role === 'mahasiswa') {
+    // For mahasiswa, check if already submitted
+    if (req.user!.role === 'mahasiswa') {
+      // Check if student already submitted this quiz
+      const { data: existingSubmission } = await supabase
+        .from('quiz_submissions')
+        .select('id, score, total_points, submitted_at')
+        .eq('quiz_id', req.params.id)
+        .eq('student_id', req.user!.id)
+        .single();
+
+      if (existingSubmission) {
+        // Get detailed answers for the submission
+        const { data: answers } = await supabase
+          .from('quiz_answers')
+          .select(`
+            *,
+            quiz_questions!inner (
+              id,
+              question_text,
+              option_a,
+              option_b,
+              option_c,
+              option_d,
+              correct_answer,
+              points,
+              order_index
+            )
+          `)
+          .eq('submission_id', existingSubmission.id);
+        
+        // Sort answers by order_index manually since Supabase doesn't support nested ordering
+        const sortedAnswers = (answers || []).sort((a: any, b: any) => {
+          const orderA = a.quiz_questions?.order_index || 0;
+          const orderB = b.quiz_questions?.order_index || 0;
+          return orderA - orderB;
+        });
+
+        // Build incorrect questions list
+        const incorrectQuestions: any[] = [];
+        sortedAnswers.forEach((answer: any) => {
+          const question = answer.quiz_questions;
+          if (!answer.is_correct && question) {
+            incorrectQuestions.push({
+              questionId: question.id,
+              questionText: question.question_text,
+              studentAnswer: answer.student_answer,
+              correctAnswer: question.correct_answer
+            });
+          }
+        });
+
+        return res.json({
+          ...quiz,
+          questions: questions?.map(q => ({
+            id: q.id,
+            question_text: q.question_text,
+            option_a: q.option_a,
+            option_b: q.option_b,
+            option_c: q.option_c,
+            option_d: q.option_d,
+            points: q.points,
+            order_index: q.order_index
+          })),
+          alreadySubmitted: true,
+          submission: {
+            ...existingSubmission,
+            incorrectQuestions: incorrectQuestions.length > 0 ? incorrectQuestions : undefined,
+            answers: sortedAnswers
+          }
+        });
+      }
+
+      // Not submitted yet - return quiz without answers
       const questionsWithoutAnswers = questions?.map(q => ({
         id: q.id,
         question_text: q.question_text,
@@ -248,17 +353,18 @@ router.get('/:id', authenticate, async (req, res) => {
         order_index: q.order_index
       }));
 
+      return res.json({
+        ...quiz,
+        questions: questionsWithoutAnswers,
+        alreadySubmitted: false
+      });
+    } else {
+      // Admins see correct answers
       res.json({
         ...quiz,
-        questions: questionsWithoutAnswers
+        questions
       });
-      } else {
-        // Admins see correct answers
-        res.json({
-          ...quiz,
-          questions
-        });
-      }
+    }
   } catch (error: any) {
     res.status(500).json({
       error: 'Failed to fetch quiz',
@@ -275,7 +381,7 @@ const submitQuizSchema = z.object({
   answers: z.array(
     z.object({
       questionId: z.string().uuid(),
-      answer: z.enum(['A', 'B', 'C', 'D'])
+      answer: z.enum(['A', 'B', 'C', 'D', 'E'])
     })
   )
 });
@@ -334,6 +440,13 @@ router.post(
           message: 'Quiz has no questions'
         });
       }
+
+      // Get class information for extracted text
+      const { data: classData } = await supabase
+        .from('classes')
+        .select('extracted_text, file_url')
+        .eq('id', quiz.class_id)
+        .single();
 
       // Evaluate answers
       let totalScore = 0;
@@ -407,7 +520,8 @@ router.post(
         message: 'Quiz submitted successfully',
         submission: {
           ...submission,
-          incorrectQuestions: incorrectQuestions.length > 0 ? incorrectQuestions : undefined
+          incorrectQuestions: incorrectQuestions.length > 0 ? incorrectQuestions : undefined,
+          extractedText: classData?.extracted_text || null // Include extracted text for AI chatbot
         }
       });
     } catch (error: any) {
