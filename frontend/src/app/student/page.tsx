@@ -6,6 +6,8 @@
  * Modern, professional student dashboard with beautiful UI
  */
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';

@@ -12,6 +12,8 @@ import JobsheetSubmissionsModal from '@/components/JobsheetSubmissionsModal';
 import LMSLayout from '@/components/LMSLayout';
 import StatCard from '@/components/StatCard';
 
+export const dynamic = 'force-dynamic';
+
 interface Module {
   id: string;
   title: string;

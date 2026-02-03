@@ -13,6 +13,8 @@ import LMSLayout from '@/components/LMSLayout';
 import StatCard from '@/components/StatCard';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
+export const dynamic = 'force-dynamic';
+
 interface User {
   id: string;
   full_name: string;
