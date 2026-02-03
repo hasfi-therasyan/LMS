@@ -1,9 +1,14 @@
 {
   "version": 2,
+  "installCommand": "npm install --prefix backend && npm install --prefix frontend",
   "builds": [
     {
       "src": "api/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["backend/**"],
+        "maxLambdaSize": "50mb"
+      }
     },
     {
       "src": "frontend/package.json",
