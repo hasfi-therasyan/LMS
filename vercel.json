@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "npm install --prefix api && npm install --prefix frontend",
+  "installCommand": "npm install --prefix api && cd frontend && npm install",
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/.next",
   "functions": {
