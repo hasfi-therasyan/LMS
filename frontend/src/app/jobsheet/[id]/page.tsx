@@ -24,6 +24,7 @@ export default function JobsheetViewPage() {
   const { profile, loadProfile } = useAuthStore();
   const [jobsheet, setJobsheet] = useState<Jobsheet | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pdfError, setPdfError] = useState(false);
 
   useEffect(() => {
     if (!profile) {
