@@ -8,7 +8,9 @@
 import axios from 'axios';
 import { getSession } from './supabase';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Use relative path in production (Vercel), absolute path in development
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001');
 
 // Create axios instance
 const api = axios.create({
