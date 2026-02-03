@@ -167,7 +167,7 @@ export default function JobsheetViewPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="h-[calc(100vh-200px)]">
             {jobsheet.file_url ? (
-              pdfError ? (
+              pdfError || !jobsheet.file_url.includes('supabase.co') ? (
                 <div className="flex items-center justify-center h-full bg-gray-50">
                   <div className="text-center p-8">
                     <svg
