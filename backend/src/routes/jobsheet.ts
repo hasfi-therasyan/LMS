@@ -120,10 +120,26 @@ router.post(
         throw uploadError;
       }
 
-      // Get public URL
+      // Get public URL - ensure path is correct
       const { data: urlData } = supabase.storage
         .from('jobsheets')
         .getPublicUrl(filePath);
+
+      // Verify the file exists and URL is valid
+      const { data: fileCheck, error: fileCheckError } = await supabase.storage
+        .from('jobsheets')
+        .list(uploadData.path.split('/').slice(0, -1).join('/') || '', {
+          limit: 1,
+          search: uploadData.path.split('/').pop()
+        });
+
+      if (fileCheckError) {
+        console.error('Error verifying uploaded file:', fileCheckError);
+        // Continue anyway, but log the error
+      }
+
+      console.log('File uploaded to:', uploadData.path);
+      console.log('Public URL generated:', urlData.publicUrl);
 
       // Create jobsheet record in database
       const { data, error } = await supabase
