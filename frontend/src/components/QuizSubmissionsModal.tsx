@@ -107,7 +107,7 @@ export default function QuizSubmissionsModal({
 
       // Convert to CSV format
       const csvContent = exportData.map(row => {
-        return row.map(cell => {
+        return row.map((cell: any) => {
           // Escape quotes and wrap in quotes if contains comma, quote, or newline
           const cellStr = String(cell || '');
           if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {

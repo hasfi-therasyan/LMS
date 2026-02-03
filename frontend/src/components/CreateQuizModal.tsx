@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 
-interface Module {
+interface Class {
   id: string;
-  title: string;
-  class_id: string;
+  name: string;
+  code: string;
 }
 
 interface Question {
@@ -25,7 +25,7 @@ interface CreateQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  modules: Module[];
+  classes: Class[];
 }
 
 export default function CreateQuizModal({
@@ -142,6 +142,7 @@ export default function CreateQuizModal({
         optionB: '',
         optionC: '',
         optionD: '',
+        optionE: '',
         correctAnswer: 'A',
         points: 1
       }

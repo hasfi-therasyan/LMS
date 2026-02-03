@@ -903,7 +903,7 @@ export default function StudentDashboard() {
                           label={{ value: 'Score (%)', angle: -90, position: 'insideLeft' }}
                         />
                         <Tooltip 
-                          formatter={(value: number) => [`${value}%`, 'Score']}
+                          formatter={(value: number | undefined) => value !== undefined ? [`${value}%`, 'Score'] : ['', 'Score']}
                           labelFormatter={(label, payload) => {
                             if (payload && payload[0]) {
                               return payload[0].payload.fullName;
@@ -943,7 +943,7 @@ export default function StudentDashboard() {
                           label={{ value: 'Score (%)', angle: -90, position: 'insideLeft' }}
                         />
                         <Tooltip 
-                          formatter={(value: number) => [`${value}%`, 'Score']}
+                          formatter={(value: number | undefined) => value !== undefined ? [`${value}%`, 'Score'] : ['', 'Score']}
                           labelFormatter={(label) => `Date: ${label}`}
                         />
                         <Legend />
