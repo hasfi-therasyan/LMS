@@ -37,10 +37,11 @@ const nextConfig = {
     const srcDir = path.resolve(frontendDir, 'src');
     
     // Resolve path aliases - must be absolute paths
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': srcDir,
-    };
+    // Override existing aliases to ensure @ points to src
+    if (!config.resolve.alias) {
+      config.resolve.alias = {};
+    }
+    config.resolve.alias['@'] = srcDir;
     
     return config;
   },
