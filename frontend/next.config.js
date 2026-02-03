@@ -14,6 +14,20 @@ const nextConfig = {
       },
     ],
   },
+  // Add headers for PDF viewing
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+        ],
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig
