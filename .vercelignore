@@ -1,0 +1,13 @@
+# Ignore everything in api/src except what's needed
+api/src/**
+!api/index.ts
+
+# Ignore backend directory (we use api/ for Vercel)
+backend/**
+
+# Ignore other directories
+node_modules/
+.git/
+.env
+.env.local
+*.log
