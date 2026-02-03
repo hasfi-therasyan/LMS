@@ -269,8 +269,8 @@ router.get('/:id', authenticate, async (req, res) => {
       throw questionsError;
     }
 
-    // For mahasiswa, check if already submitted
-    if (req.user!.role === 'mahasiswa') {
+    // For mahasiswa/student, check if already submitted
+    if (req.user!.role === 'mahasiswa' || req.user!.role === 'student') {
       // Check if student already submitted this quiz
       const { data: existingSubmission } = await supabase
         .from('quiz_submissions')
