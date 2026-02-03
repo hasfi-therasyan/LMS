@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/.next",
-  "installCommand": "npm install --prefix api && cd frontend && npm install --include=dev",
+  "installCommand": "cd .. && npm install --prefix api && cd frontend && npm install --include=dev",
   "functions": {
     "api/index.ts": {
       "includeFiles": "api/_src/**",
