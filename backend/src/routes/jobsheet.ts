@@ -244,21 +244,18 @@ router.get('/:id', authenticate, async (req, res) => {
           const filePath = pathParts.slice(storageIndex + 4).join('/');
           
           // Try to regenerate the URL with correct format
-          const { data: urlData } = supabase.storage
+          const { data: urlData, error: urlError } = supabase.storage
             .from(bucketName)
             .getPublicUrl(filePath);
           
-          // Check if the new URL is different (might be more reliable)
-          if (urlData.publicUrl && urlData.publicUrl !== data.file_url) {
+          if (urlError) {
+            console.error('Error regenerating URL:', urlError);
+          } else if (urlData.publicUrl) {
+            // Always use the regenerated URL to ensure it's correct
             console.log('Regenerating file URL for jobsheet:', id);
             console.log('Old URL:', data.file_url);
             console.log('New URL:', urlData.publicUrl);
-            
-            // Update in database if URL changed significantly
-            // (Only update if the path structure is different)
-            if (urlData.publicUrl.includes(bucketName)) {
-              data.file_url = urlData.publicUrl;
-            }
+            data.file_url = urlData.publicUrl;
           }
         }
       } catch (urlError) {
