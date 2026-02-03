@@ -837,7 +837,7 @@ export default function AdminDashboard() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" fontSize={12} />
                             <YAxis domain={[0, 100]} label={{ value: 'Score (%)', angle: -90, position: 'insideLeft' }} />
-                            <Tooltip formatter={(value: number) => [`${value}%`, 'Score']} />
+                            <Tooltip formatter={(value: number | undefined) => value !== undefined ? [`${value}%`, 'Score'] : ['', 'Score']} />
                             <Legend />
                             <Line type="monotone" dataKey="score" name="Score (%)" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                           </LineChart>
