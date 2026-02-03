@@ -31,11 +31,15 @@ const nextConfig = {
     ];
   },
   // Ensure TypeScript path aliases work
-  webpack: (config, { isServer }) => {
-    // Resolve path aliases
+  webpack: (config) => {
+    // Get the absolute path to the frontend directory
+    const frontendDir = path.resolve(__dirname);
+    const srcDir = path.resolve(frontendDir, 'src');
+    
+    // Resolve path aliases - must be absolute paths
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': path.resolve(__dirname, './src'),
+      '@': srcDir,
     };
     
     return config;
