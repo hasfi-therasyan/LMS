@@ -58,41 +58,7 @@ export default function JobsheetViewPage() {
     setLoading(true);
     try {
       const response = await apiClient.getJobsheet(params.id as string);
-      const jobsheetData = response.data;
-      
-      // Validate and fix file_url encoding
-      if (jobsheetData.file_url) {
-        try {
-          // Decode URL to check for encoding issues
-          const decodedUrl = decodeURIComponent(jobsheetData.file_url);
-          console.log('Original URL:', jobsheetData.file_url);
-          console.log('Decoded URL:', decodedUrl);
-          
-          // Re-encode URL properly to ensure it's valid
-          // Split URL into base and path parts
-          const url = new URL(jobsheetData.file_url);
-          const pathParts = url.pathname.split('/');
-          const fileName = pathParts[pathParts.length - 1];
-          
-          // Properly encode the filename
-          const encodedFileName = encodeURIComponent(decodeURIComponent(fileName));
-          const fixedPath = pathParts.slice(0, -1).join('/') + '/' + encodedFileName;
-          const fixedUrl = `${url.origin}${fixedPath}${url.search}${url.hash}`;
-          
-          // Use fixed URL if different
-          if (fixedUrl !== jobsheetData.file_url) {
-            console.log('Fixed URL encoding:', fixedUrl);
-            jobsheetData.file_url = fixedUrl;
-          }
-          
-          console.log('Final file URL:', jobsheetData.file_url);
-        } catch (urlError) {
-          console.error('Invalid file URL:', jobsheetData.file_url, urlError);
-          // Continue with original URL
-        }
-      }
-      
-      setJobsheet(jobsheetData);
+      setJobsheet(response.data);
     } catch (error: any) {
       console.error('Error loading jobsheet:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to load jobsheet';
