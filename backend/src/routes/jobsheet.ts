@@ -120,38 +120,10 @@ router.post(
         throw uploadError;
       }
 
-      // Get public URL using the actual path from upload response
-      // uploadData.path contains the actual path where file was stored
-      const actualPath = uploadData.path;
+      // Get public URL
       const { data: urlData } = supabase.storage
         .from('jobsheets')
-        .getPublicUrl(actualPath);
-
-      // Verify the file exists
-      const { data: fileList, error: fileCheckError } = await supabase.storage
-        .from('jobsheets')
-        .list(actualPath.split('/').slice(0, -1).join('/') || '', {
-          limit: 100
-        });
-
-      if (fileCheckError) {
-        console.error('Error verifying uploaded file:', fileCheckError);
-      } else {
-        const fileName = actualPath.split('/').pop();
-        const fileExists = fileList?.some(f => f.name === fileName);
-        console.log('File verification:', {
-          path: actualPath,
-          fileName,
-          exists: fileExists,
-          fileListCount: fileList?.length || 0
-        });
-      }
-
-      console.log('File upload details:', {
-        requestedPath: filePath,
-        actualPath: uploadData.path,
-        publicUrl: urlData.publicUrl
-      });
+        .getPublicUrl(filePath);
 
       // Create jobsheet record in database
       const { data, error } = await supabase
@@ -229,40 +201,6 @@ router.get('/:id', authenticate, async (req, res) => {
       }
     }
     // Mahasiswa can access ALL jobsheets (no enrollment required)
-
-    // If file_url exists, try to verify and fix it if needed
-    if (data.file_url) {
-      try {
-        // Parse the URL to extract bucket and path
-        const url = new URL(data.file_url);
-        const pathParts = url.pathname.split('/').filter(p => p);
-        
-        // Find storage path (usually /storage/v1/object/public/bucket/path)
-        const storageIndex = pathParts.findIndex(p => p === 'storage');
-        if (storageIndex >= 0 && pathParts[storageIndex + 1] === 'v1') {
-          const bucketName = pathParts[storageIndex + 3]; // After 'object/public'
-          const filePath = pathParts.slice(storageIndex + 4).join('/');
-          
-          // Try to regenerate the URL with correct format
-          const { data: urlData, error: urlError } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(filePath);
-          
-          if (urlError) {
-            console.error('Error regenerating URL:', urlError);
-          } else if (urlData.publicUrl) {
-            // Always use the regenerated URL to ensure it's correct
-            console.log('Regenerating file URL for jobsheet:', id);
-            console.log('Old URL:', data.file_url);
-            console.log('New URL:', urlData.publicUrl);
-            data.file_url = urlData.publicUrl;
-          }
-        }
-      } catch (urlError) {
-        console.error('Error processing file URL for jobsheet:', id, urlError);
-        // Continue with original URL - don't fail the request
-      }
-    }
 
     res.json(data);
   } catch (error: any) {
