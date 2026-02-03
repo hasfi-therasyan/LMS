@@ -8,6 +8,10 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'LMS - Learning Management System',
   description: 'Higher Education Learning Management System with AI Chatbot',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
