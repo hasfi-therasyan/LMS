@@ -60,7 +60,7 @@ export async function authenticate(
       req.user = {
         id: user.id,
         email: user.email || '',
-        role: (profile.role === 'mahasiswa' ? 'student' : profile.role) as 'admin' | 'lecturer' | 'student' | 'mahasiswa'
+        role: profile.role as 'admin' | 'lecturer' | 'student' | 'mahasiswa'
       };
 
     next();
