@@ -116,7 +116,7 @@ router.get(
       // Get all submissions
       const { data: submissions } = await supabase
         .from('quiz_submissions')
-        .select('score, total_points')
+        .select('id, score, total_points')
         .eq('quiz_id', quizId);
 
       if (!submissions || submissions.length === 0) {
