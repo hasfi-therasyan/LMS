@@ -1,5 +1,5 @@
-# Ignore everything in api/src except what's needed
-api/src/**
+# Ignore everything in api/_src (Vercel ignores directories starting with _)
+api/_src/**
 !api/index.ts
 
 # Ignore backend directory (we use api/ for Vercel)

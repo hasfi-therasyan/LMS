@@ -5,7 +5,7 @@
   "outputDirectory": "frontend/.next",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "api/src/**",
+      "includeFiles": "api/_src/**",
       "maxDuration": 30
     }
   },
