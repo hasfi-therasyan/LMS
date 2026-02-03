@@ -8,7 +8,10 @@
 import axios from 'axios';
 import { getSession } from './supabase';
 
-// Use relative path in production (Vercel), absolute path in development
+// Use Railway backend URL in production, relative path for Vercel, absolute path in development
+// Railway: NEXT_PUBLIC_API_URL will be set to Railway backend URL (e.g., https://backend-production.up.railway.app)
+// Vercel: NEXT_PUBLIC_API_URL empty = same domain (/api)
+// Development: http://localhost:3001
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 
   (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001');
 

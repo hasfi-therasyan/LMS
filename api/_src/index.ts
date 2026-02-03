@@ -38,7 +38,9 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
   'https://fliplearning.vercel.app',
-  'https://*.vercel.app' // Support all Vercel preview deployments
+  'https://*.vercel.app', // Support all Vercel preview deployments
+  'https://*.railway.app', // Support all Railway deployments
+  'https://*.up.railway.app' // Support Railway production URLs
 ].filter(Boolean); // Remove undefined values
 
 const corsOptions = {
