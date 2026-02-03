@@ -8,8 +8,9 @@
 // Set VERCEL environment variable
 process.env.VERCEL = '1';
 
-// Import the Express app from local src directory
-import app from './src/index';
+// Import the Express app from local _src directory
+// Using _src to prevent Vercel from detecting it as a serverless function
+import app from './_src/index';
 
 // Export the Express app as a serverless function
 // Vercel will pass requests to this function, and Express will handle routing
