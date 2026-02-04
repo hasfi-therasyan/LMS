@@ -4,8 +4,8 @@
   # Base directory (where package.json is located)
   base = "frontend"
   
-  # Install command - ensure devDependencies are installed
-  command = "npm install && npm run build"
+  # Build command
+  command = "npm run build"
   
   # Publish directory (Next.js output)
   # Netlify Next.js plugin will handle this automatically
@@ -13,8 +13,9 @@
 
 # Next.js configuration
 [build.environment]
-  NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps --include=dev"
+  NODE_VERSION = "20"
+  # Ensure devDependencies are installed (TypeScript, @types/*)
+  NPM_FLAGS = "--legacy-peer-deps"
 
 # Function configuration for API routes
 # Netlify will auto-detect Next.js API routes and convert them to functions
