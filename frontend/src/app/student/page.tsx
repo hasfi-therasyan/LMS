@@ -564,7 +564,7 @@ export default function StudentDashboard() {
               <p className="text-sm text-blue-800">
                 <span className="font-semibold">⚠️ Format Nama File:</span> File harus berformat <span className="font-mono font-semibold">NamaMahasiswa_NomorJobsheet.pdf</span>
                 <br />
-                <span className="text-xs text-blue-700 mt-1 block">Contoh: AhmadFauzi_JS01.pdf</span>
+                <span className="text-xs text-blue-700 mt-1 block">Contoh: HasfiRasya_JS01.pdf</span>
               </p>
             </div>
           </div>
