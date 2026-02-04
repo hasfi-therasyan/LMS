@@ -5,8 +5,8 @@
   base = "frontend"
   
   # Build command - ensure devDependencies are installed
-  # NODE_ENV=development ensures devDependencies are installed
-  command = "NODE_ENV=development npm install --legacy-peer-deps && npm run build"
+  # Using npm install (not npm ci) to ensure devDependencies are always installed
+  command = "npm install --legacy-peer-deps && npm run build"
   
   # Publish directory (Next.js output)
   # Netlify Next.js plugin will handle this automatically
