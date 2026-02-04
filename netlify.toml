@@ -17,6 +17,8 @@
   NODE_VERSION = "20"
   # Ensure devDependencies are installed (TypeScript, @types/*)
   NPM_FLAGS = "--legacy-peer-deps"
+  # Prevent npm from skipping devDependencies
+  NPM_CONFIG_PRODUCTION = "false"
 
 # Function configuration for API routes
 # Netlify will auto-detect Next.js API routes and convert them to functions
