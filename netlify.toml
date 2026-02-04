@@ -4,8 +4,9 @@
   # Base directory (where package.json is located)
   base = "frontend"
   
-  # Build command - explicitly install devDependencies first
-  command = "npm ci && npm run build"
+  # Build command - ensure devDependencies are installed
+  # NODE_ENV=development ensures devDependencies are installed
+  command = "NODE_ENV=development npm install --legacy-peer-deps && npm run build"
   
   # Publish directory (Next.js output)
   # Netlify Next.js plugin will handle this automatically
