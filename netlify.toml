@@ -19,12 +19,12 @@
 # Function configuration for API routes
 # Netlify will auto-detect Next.js API routes and convert them to functions
 [functions]
-  # Node.js version for functions
+  # Node.js bundler for functions
   node_bundler = "esbuild"
   
-  # Function timeout (10 seconds for free tier, 26 seconds for Pro)
-  # Note: Netlify free tier has 10s timeout, Pro has 26s
-  timeout = 10
+  # Note: Function timeout is configured in Netlify Dashboard
+  # Free tier: 10s, Pro tier: 26s
+  # Set timeout in: Site settings → Functions → Function timeout
 
 # Headers for security
 [[headers]]
