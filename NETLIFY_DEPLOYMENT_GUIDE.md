@@ -68,17 +68,27 @@ Klik **"Site settings"** → **"Environment variables"** → **"Add variable"**
 Tambahkan semua variables berikut:
 
 ```env
+# Backend API (untuk server-side)
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 SUPABASE_ANON_KEY=your-anon-key
+
+# Frontend (harus menggunakan NEXT_PUBLIC_ prefix)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# AI & Other
 GEMINI_API_KEY=your-gemini-api-key
 MAX_FILE_SIZE=10485760
 GEMINI_MODEL=gemini-2.0-flash-lite
 ```
 
-**PENTING**: 
+**⚠️ PENTING**: 
+- `NEXT_PUBLIC_SUPABASE_URL` harus **FULL URL** dengan `https://` dan domain (`.supabase.co` atau `.supabase.in`)
+  - ✅ Benar: `https://ngxlniymmmmkijefhjbm.supabase.co`
+  - ❌ Salah: `ngxlniymmmmkijefhjbm` atau `ngxlniymmmmkijefhjbm.supabase`
 - Set untuk **Production**, **Deploy previews**, dan **Branch deploys**
-- Jangan set `NEXT_PUBLIC_API_URL`
+- Jangan set `NEXT_PUBLIC_API_URL` (biarkan kosong untuk menggunakan relative path)
 
 #### Step 4: Deploy
 
