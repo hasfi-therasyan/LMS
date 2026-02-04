@@ -101,13 +101,13 @@ export default function StudentDashboard() {
     if (!profile) {
       loadProfile();
     }
-    if (profile && profile.role !== 'mahasiswa') {
+    if (profile && profile.role !== 'student') {
       router.push('/');
     }
   }, [profile, router, loadProfile]);
 
   useEffect(() => {
-    if (profile?.role === 'mahasiswa') {
+    if (profile?.role === 'student') {
       loadData();
     }
   }, [profile]);

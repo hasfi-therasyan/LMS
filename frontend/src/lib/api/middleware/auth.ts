@@ -39,10 +39,21 @@ export async function authenticate(request: NextRequest): Promise<ApiUser> {
     throw new Error('User profile not found');
   }
 
+  // Map database role to API role (handle legacy 'mahasiswa' role)
+  let apiRole: 'admin' | 'lecturer' | 'student';
+  if (profile.role === 'mahasiswa' || profile.role === 'student') {
+    apiRole = 'student';
+  } else if (profile.role === 'admin' || profile.role === 'lecturer') {
+    apiRole = profile.role;
+  } else {
+    // Default to student for unknown roles
+    apiRole = 'student';
+  }
+
   return {
     id: user.id,
     email: user.email || '',
-    role: profile.role as 'admin' | 'lecturer' | 'student'
+    role: apiRole
   };
 }
 

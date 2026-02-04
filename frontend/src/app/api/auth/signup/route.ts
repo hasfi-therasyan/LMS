@@ -45,14 +45,14 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to create user in Auth');
     }
 
-    // Create profile with mahasiswa role
+    // Create profile with student role
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .insert({
         id: authData.user.id,
         email: email,
         full_name: full_name,
-        role: 'mahasiswa'
+        role: 'student'
       })
       .select()
       .single();
