@@ -8,9 +8,12 @@
   # Using npm install (not npm ci) to ensure devDependencies are always installed
   command = "npm install --legacy-peer-deps && npm run build"
   
-  # Publish directory (Next.js output)
-  # Netlify Next.js plugin will handle this automatically
-  publish = ".next"
+  # Publish directory - Next.js plugin will handle this automatically
+  # Don't set publish directory when using @netlify/plugin-nextjs
+
+# Next.js plugin configuration
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # Next.js configuration
 [build.environment]
