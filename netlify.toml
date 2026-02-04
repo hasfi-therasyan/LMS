@@ -4,8 +4,8 @@
   # Base directory (where package.json is located)
   base = "frontend"
   
-  # Build command
-  command = "npm run build"
+  # Install command - ensure devDependencies are installed
+  command = "npm install && npm run build"
   
   # Publish directory (Next.js output)
   # Netlify Next.js plugin will handle this automatically
