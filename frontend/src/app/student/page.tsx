@@ -559,7 +559,14 @@ export default function StudentDashboard() {
         <div className="animate-fade-in">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Jobsheet Assignments</h2>
-            <p className="text-sm text-gray-600">Upload your assignment files (Maximum 4 files per jobsheet)</p>
+            <p className="text-sm text-gray-600 mb-2">Upload your assignment files (Maximum 4 files per jobsheet)</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+              <p className="text-sm text-blue-800">
+                <span className="font-semibold">⚠️ Format Nama File:</span> File harus berformat <span className="font-mono font-semibold">NamaMahasiswa_NomorJobsheet.pdf</span>
+                <br />
+                <span className="text-xs text-blue-700 mt-1 block">Contoh: AhmadFauzi_JS01.pdf</span>
+              </p>
+            </div>
           </div>
           <div className="space-y-6">
             {jobsheets.map((jobsheet) => {
