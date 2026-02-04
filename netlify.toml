@@ -14,7 +14,7 @@
 # Next.js configuration
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps"
+  NPM_FLAGS = "--legacy-peer-deps --include=dev"
 
 # Function configuration for API routes
 # Netlify will auto-detect Next.js API routes and convert them to functions
