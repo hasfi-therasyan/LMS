@@ -102,7 +102,14 @@ export default function StudentDashboard() {
       loadProfile();
     }
     if (profile && profile.role !== 'student') {
-      router.push('/');
+      // Redirect based on actual role
+      if (profile.role === 'admin') {
+        router.push('/admin');
+      } else if (profile.role === 'lecturer') {
+        router.push('/lecturer');
+      } else {
+        router.push('/login');
+      }
     }
   }, [profile, router, loadProfile]);
 

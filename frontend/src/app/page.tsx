@@ -25,8 +25,13 @@ export default function Home() {
             if (profile) {
               if (profile.role === 'admin') {
                 router.push('/admin');
-              } else {
+              } else if (profile.role === 'lecturer') {
+                router.push('/lecturer');
+              } else if (profile.role === 'student') {
                 router.push('/student');
+              } else {
+                // Unknown role, redirect to login
+                router.push('/login');
               }
             } else {
               // If profile is null (e.g., due to rate limiting), redirect to login
