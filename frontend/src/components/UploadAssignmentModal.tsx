@@ -158,6 +158,13 @@ export default function UploadAssignmentModal({
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Upload File (PDF) <span className="text-red-500">*</span>
               </label>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                <p className="text-xs text-blue-800">
+                  <span className="font-semibold">Format Nama File:</span> File harus berformat <span className="font-mono font-semibold">NamaMahasiswa_NomorJobsheet.pdf</span>
+                  <br />
+                  <span className="text-blue-700 mt-1 block">Contoh: AhmadFauzi_JS01.pdf</span>
+                </p>
+              </div>
               <div
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
