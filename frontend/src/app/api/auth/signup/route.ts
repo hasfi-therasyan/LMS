@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         id: authData.user.id,
         email: email,
         full_name: full_name,
-        role: 'student'
+        role: 'mahasiswa'
       })
       .select()
       .single();

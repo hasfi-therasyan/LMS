@@ -19,7 +19,7 @@ interface User {
   id: string;
   full_name: string;
   email: string;
-  role: 'admin' | 'student';
+  role: 'admin' | 'mahasiswa';
   created_at: string;
 }
 
@@ -93,9 +93,7 @@ export default function AdminDashboard() {
     }
     if (profile && profile.role !== 'admin') {
       // Redirect based on actual role
-      if (profile.role === 'lecturer') {
-        router.push('/lecturer');
-      } else if (profile.role === 'student') {
+      if (profile.role === 'mahasiswa') {
         router.push('/student');
       } else {
         router.push('/login');
@@ -152,7 +150,7 @@ export default function AdminDashboard() {
       });
       
       // Get all students (student role)
-      const students = usersData.filter(u => u.role === 'student');
+      const students = usersData.filter(u => u.role === 'mahasiswa');
       console.log('Found students:', students.length);
       
       // For each student, get their submissions and assignments
@@ -248,7 +246,7 @@ export default function AdminDashboard() {
   }
 
   const admins = users.filter(u => u.role === 'admin');
-  const students = users.filter(u => u.role === 'student');
+  const students = users.filter(u => u.role === 'mahasiswa');
 
   const navItems = [
     {

@@ -23,7 +23,7 @@ export async function POST(
 ) {
   try {
     const user = await authenticate(request);
-    requireRole(user, 'student');
+    requireRole(user, 'mahasiswa');
 
     const body = await request.json();
     const { answers } = submitQuizSchema.parse(body);

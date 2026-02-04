@@ -66,9 +66,7 @@ export default function JobsheetViewPage() {
       // Redirect based on role
       if (profile?.role === 'admin') {
         router.push('/admin#jobsheets');
-      } else if (profile?.role === 'lecturer') {
-        router.push('/lecturer#jobsheets');
-      } else if (profile?.role === 'student') {
+      } else if (profile?.role === 'mahasiswa') {
         router.push('/student#jobsheets');
       } else {
         router.push('/login');

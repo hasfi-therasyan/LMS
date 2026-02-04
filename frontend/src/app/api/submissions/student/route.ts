@@ -10,7 +10,7 @@ import { supabase } from '@/lib/api/config/supabase';
 export async function GET(request: NextRequest) {
   try {
     const user = await authenticate(request);
-    requireRole(user, 'student');
+    requireRole(user, 'mahasiswa');
 
     // Get all submissions for the student with quiz info
     const { data: submissions, error } = await supabase
