@@ -16,7 +16,8 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
     const data = await pdfParse(pdfBuffer);
     
     // Clean up the extracted text
-    let text = data.text;
+    // Ensure text is always a string (default to empty string if undefined)
+    let text = data.text ?? '';
     
     // Remove excessive whitespace
     text = text.replace(/\s+/g, ' ');
