@@ -2,20 +2,14 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "installCommand": "cd .. && npm install --prefix api && cd frontend && npm install --include=dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
   "functions": {
-    "../api/index.ts": {
-      "includeFiles": "../api/_src/**",
+    "src/app/api/**/*.ts": {
       "maxDuration": 30,
       "memory": 1024
     }
   },
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index.ts"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
