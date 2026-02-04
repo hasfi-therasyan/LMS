@@ -13,7 +13,7 @@
 
 # Next.js configuration
 [build.environment]
-  NODE_VERSION = "18.x"
+  NODE_VERSION = "18"
   NPM_FLAGS = "--legacy-peer-deps"
 
 # Function configuration for API routes
