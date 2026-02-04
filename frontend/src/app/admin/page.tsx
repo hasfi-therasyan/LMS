@@ -92,7 +92,14 @@ export default function AdminDashboard() {
       loadProfile();
     }
     if (profile && profile.role !== 'admin') {
-      router.push('/');
+      // Redirect based on actual role
+      if (profile.role === 'lecturer') {
+        router.push('/lecturer');
+      } else if (profile.role === 'student') {
+        router.push('/student');
+      } else {
+        router.push('/login');
+      }
     }
   }, [profile, router, loadProfile]);
 

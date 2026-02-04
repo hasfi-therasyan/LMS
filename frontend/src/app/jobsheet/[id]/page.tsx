@@ -66,8 +66,12 @@ export default function JobsheetViewPage() {
       // Redirect based on role
       if (profile?.role === 'admin') {
         router.push('/admin#jobsheets');
-      } else {
+      } else if (profile?.role === 'lecturer') {
+        router.push('/lecturer#jobsheets');
+      } else if (profile?.role === 'student') {
         router.push('/student#jobsheets');
+      } else {
+        router.push('/login');
       }
     } finally {
       setLoading(false);

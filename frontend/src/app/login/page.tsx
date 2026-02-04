@@ -98,8 +98,13 @@ function LoginContent() {
             if (profile) {
               if (profile.role === 'admin') {
                 router.push('/admin');
-              } else {
+              } else if (profile.role === 'lecturer') {
+                router.push('/lecturer');
+              } else if (profile.role === 'student') {
                 router.push('/student');
+              } else {
+                // Unknown role, redirect to home
+                router.push('/');
               }
             } else {
               // If profile not found, redirect anyway (will be handled by page)
