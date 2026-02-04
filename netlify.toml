@@ -1,0 +1,44 @@
+# Netlify Configuration for Next.js LMS Application
+
+[build]
+  # Base directory (where package.json is located)
+  base = "frontend"
+  
+  # Build command
+  command = "npm run build"
+  
+  # Publish directory (Next.js output)
+  # Netlify Next.js plugin will handle this automatically
+  publish = ".next"
+
+# Next.js configuration
+[build.environment]
+  NODE_VERSION = "18.x"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Function configuration for API routes
+# Netlify will auto-detect Next.js API routes and convert them to functions
+[functions]
+  # Node.js version for functions
+  node_bundler = "esbuild"
+  
+  # Function timeout (10 seconds for free tier, 26 seconds for Pro)
+  # Note: Netlify free tier has 10s timeout, Pro has 26s
+  timeout = 10
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Headers for API routes
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
