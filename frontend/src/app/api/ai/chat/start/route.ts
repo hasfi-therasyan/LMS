@@ -17,7 +17,7 @@ const startChatSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const user = await authenticate(request);
-    requireRole(user, 'mahasiswa');
+    requireRole(user, 'student');
 
     const body = await request.json();
     const { submissionId, questionId } = startChatSchema.parse(body);

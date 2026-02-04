@@ -13,7 +13,7 @@ export async function GET(
 ) {
   try {
     const user = await authenticate(request);
-    requireRole(user, 'mahasiswa');
+    requireRole(user, 'student');
 
     // Verify session belongs to student
     const { data: session, error: sessionError } = await supabase

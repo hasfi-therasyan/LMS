@@ -19,7 +19,7 @@ interface User {
   id: string;
   full_name: string;
   email: string;
-  role: 'admin' | 'mahasiswa';
+  role: 'admin' | 'student';
   created_at: string;
 }
 
@@ -144,8 +144,8 @@ export default function AdminDashboard() {
         submissionsCount: submissionsData.length 
       });
       
-      // Get all students (mahasiswa role)
-      const students = usersData.filter(u => u.role === 'mahasiswa');
+      // Get all students (student role)
+      const students = usersData.filter(u => u.role === 'student');
       console.log('Found students:', students.length);
       
       // For each student, get their submissions and assignments
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
   }
 
   const admins = users.filter(u => u.role === 'admin');
-  const mahasiswa = users.filter(u => u.role === 'mahasiswa');
+  const students = users.filter(u => u.role === 'student');
 
   const navItems = [
     {
@@ -317,7 +317,7 @@ export default function AdminDashboard() {
             />
             <StatCard
               title="Students"
-              value={mahasiswa.length}
+              value={students.length}
               gradient="accent"
               icon={
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -512,13 +512,13 @@ export default function AdminDashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Students ({mahasiswa.length})</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Students ({students.length})</h3>
               </div>
               <div className="space-y-3">
-                {mahasiswa.length === 0 ? (
+                {students.length === 0 ? (
                   <p className="text-center py-8 text-gray-500">No students yet</p>
                 ) : (
-                  mahasiswa.map((user) => (
+                  students.map((user) => (
                     <div key={user.id} className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="w-10 h-10 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
                         {user.full_name.charAt(0).toUpperCase()}

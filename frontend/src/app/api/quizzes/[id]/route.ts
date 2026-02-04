@@ -42,8 +42,8 @@ export async function GET(
       throw questionsError;
     }
 
-    // For mahasiswa, check if already submitted
-    if (user.role === 'mahasiswa') {
+    // For student, check if already submitted
+    if (user.role === 'student') {
       const { data: existingSubmission } = await supabase
         .from('quiz_submissions')
         .select('id, score, total_points, submitted_at')
