@@ -8,16 +8,21 @@
 import axios from 'axios';
 import { getSession } from './supabase';
 
-// Use Railway backend URL in production, relative path for Vercel, absolute path in development
-// Railway: NEXT_PUBLIC_API_URL will be set to Railway backend URL (e.g., https://backend-production.up.railway.app)
-// Vercel: NEXT_PUBLIC_API_URL empty = same domain (/api)
-// Development: http://localhost:3001
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 
-  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001');
+// Use relative path for Next.js API routes (same domain)
+// All API routes are now in the same Next.js app at /api/*
+// If NEXT_PUBLIC_API_URL is set, use it (for external backend), otherwise use relative path
+// In browser, we need to use absolute URL for relative paths to work correctly
+const getBaseURL = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return `${process.env.NEXT_PUBLIC_API_URL}/api`;
+  }
+  // Use relative path - axios will resolve it correctly
+  return '/api';
+};
 
 // Create axios instance
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json'
   }
