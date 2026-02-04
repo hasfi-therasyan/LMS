@@ -12,7 +12,7 @@ import { verifyUserToken, getUserProfile } from '../config/supabase';
 export interface ApiUser {
   id: string;
   email: string;
-  role: 'admin' | 'lecturer' | 'student';
+  role: 'admin' | 'mahasiswa';
 }
 
 /**
@@ -39,15 +39,16 @@ export async function authenticate(request: NextRequest): Promise<ApiUser> {
     throw new Error('User profile not found');
   }
 
-  // Map database role to API role (handle legacy 'mahasiswa' role)
-  let apiRole: 'admin' | 'lecturer' | 'student';
-  if (profile.role === 'mahasiswa' || profile.role === 'student') {
-    apiRole = 'student';
-  } else if (profile.role === 'admin' || profile.role === 'lecturer') {
-    apiRole = profile.role;
+  // Map database role to API role
+  // Database only has 'admin' and 'mahasiswa'
+  let apiRole: 'admin' | 'mahasiswa';
+  if (profile.role === 'admin') {
+    apiRole = 'admin';
+  } else if (profile.role === 'mahasiswa') {
+    apiRole = 'mahasiswa';
   } else {
-    // Default to student for unknown roles
-    apiRole = 'student';
+    // Default to mahasiswa for unknown roles
+    apiRole = 'mahasiswa';
   }
 
   return {

@@ -25,9 +25,7 @@ export default function Home() {
             if (profile) {
               if (profile.role === 'admin') {
                 router.push('/admin');
-              } else if (profile.role === 'lecturer') {
-                router.push('/lecturer');
-              } else if (profile.role === 'student') {
+              } else if (profile.role === 'mahasiswa') {
                 router.push('/student');
               } else {
                 // Unknown role, redirect to login

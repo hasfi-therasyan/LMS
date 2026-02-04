@@ -43,7 +43,7 @@ export async function GET(
     }
 
     // For student, check if already submitted
-    if (user.role === 'student') {
+    if (user.role === 'mahasiswa') {
       const { data: existingSubmission } = await supabase
         .from('quiz_submissions')
         .select('id, score, total_points, submitted_at')

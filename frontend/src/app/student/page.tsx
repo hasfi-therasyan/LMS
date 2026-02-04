@@ -101,12 +101,10 @@ export default function StudentDashboard() {
     if (!profile) {
       loadProfile();
     }
-    if (profile && profile.role !== 'student') {
+    if (profile && profile.role !== 'mahasiswa') {
       // Redirect based on actual role
       if (profile.role === 'admin') {
         router.push('/admin');
-      } else if (profile.role === 'lecturer') {
-        router.push('/lecturer');
       } else {
         router.push('/login');
       }
@@ -114,7 +112,7 @@ export default function StudentDashboard() {
   }, [profile, router, loadProfile]);
 
   useEffect(() => {
-    if (profile?.role === 'student') {
+    if (profile?.role === 'mahasiswa') {
       loadData();
     }
   }, [profile]);

@@ -17,7 +17,7 @@ const submitJobsheetSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const user = await authenticate(request);
-    requireRole(user, 'student');
+    requireRole(user, 'mahasiswa');
 
     const { file, fields } = await parseFormData(request);
 

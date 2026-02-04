@@ -12,7 +12,7 @@ interface Profile {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'lecturer' | 'student';
+  role: 'admin' | 'mahasiswa';
 }
 
 interface AuthState {
