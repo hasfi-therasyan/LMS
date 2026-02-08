@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 import CreateJobsheetModal from '@/components/CreateJobsheetModal';
 import CreateQuizModal from '@/components/CreateQuizModal';
+import EditQuizModal from '@/components/EditQuizModal';
 import QuizSubmissionsModal from '@/components/QuizSubmissionsModal';
 import ViewAssignmentsModal from '@/components/ViewAssignmentsModal';
 import LMSLayout from '@/components/LMSLayout';
@@ -56,6 +57,7 @@ export default function AdminDashboard() {
   const [groupedAssignments, setGroupedAssignments] = useState<any[]>([]);
   const [showCreateJobsheet, setShowCreateJobsheet] = useState(false);
   const [showCreateQuiz, setShowCreateQuiz] = useState(false);
+  const [quizToEdit, setQuizToEdit] = useState<string | null>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<{ id: string; title: string } | null>(null);
   const [showViewAssignments, setShowViewAssignments] = useState(false);
   const [selectedJobsheetForAssignments, setSelectedJobsheetForAssignments] = useState<{ id: string; name: string } | null>(null);
@@ -663,7 +665,13 @@ export default function AdminDashboard() {
                   {quiz.description && (
                     <p className="text-sm text-gray-600 mb-4 line-clamp-2">{quiz.description}</p>
                   )}
-                  <div className="flex items-center justify-end space-x-2 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-end flex-wrap gap-2 pt-4 border-t border-gray-100">
+                    <button
+                      onClick={() => setQuizToEdit(quiz.id)}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                    >
+                      Edit
+                    </button>
                     <button
                       onClick={() => setSelectedQuiz({ id: quiz.id, title: quiz.title })}
                       className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
@@ -970,6 +978,16 @@ export default function AdminDashboard() {
             setShowCreateQuiz(false);
             loadData();
           }}
+          onSuccess={loadData}
+          classes={jobsheets}
+        />
+      )}
+
+      {quizToEdit && (
+        <EditQuizModal
+          isOpen={!!quizToEdit}
+          quizId={quizToEdit}
+          onClose={() => setQuizToEdit(null)}
           onSuccess={loadData}
           classes={jobsheets}
         />

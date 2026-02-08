@@ -374,6 +374,100 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 /**
+ * PUT /api/quizzes/:id
+ * Update a quiz (Admin only)
+ */
+router.put(
+  '/:id',
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const quizId = req.params.id;
+      const { title, description, timeLimit, questions } = createQuizSchema.omit({ classId: true }).parse(req.body);
+
+      const { data: quiz, error: fetchError } = await supabase
+        .from('quizzes')
+        .select('id, created_by, class_id')
+        .eq('id', quizId)
+        .single();
+
+      if (fetchError || !quiz) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Quiz not found'
+        });
+      }
+
+      if (quiz.created_by !== req.user!.id) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'You can only edit your own quizzes'
+        });
+      }
+
+      const { error: updateError } = await supabase
+        .from('quizzes')
+        .update({
+          title,
+          description: description || null,
+          time_limit: timeLimit || null
+        })
+        .eq('id', quizId);
+
+      if (updateError) throw updateError;
+
+      await supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
+
+      const questionsData = questions.map(q => ({
+        quiz_id: quizId,
+        question_text: q.questionText,
+        option_a: q.optionA,
+        option_b: q.optionB,
+        option_c: q.optionC,
+        option_d: q.optionD,
+        option_e: q.optionE,
+        correct_answer: q.correctAnswer,
+        points: q.points,
+        order_index: q.orderIndex
+      }));
+
+      const { data: createdQuestions, error: questionsError } = await supabase
+        .from('quiz_questions')
+        .insert(questionsData)
+        .select();
+
+      if (questionsError) throw questionsError;
+
+      const { data: updatedQuiz } = await supabase
+        .from('quizzes')
+        .select('*')
+        .eq('id', quizId)
+        .single();
+
+      res.json({
+        message: 'Quiz updated successfully',
+        quiz: {
+          ...updatedQuiz,
+          questions: createdQuestions
+        }
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        });
+      }
+      res.status(500).json({
+        error: 'Failed to update quiz',
+        message: error.message
+      });
+    }
+  }
+);
+
+/**
  * POST /api/quizzes/:id/submit
  * Submit quiz answers (Mahasiswa only)
  */

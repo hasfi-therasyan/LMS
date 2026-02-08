@@ -1,11 +1,32 @@
 /**
  * GET /api/quizzes/:id - Get a specific quiz
+ * PUT /api/quizzes/:id - Update a quiz (Admin only)
  * DELETE /api/quizzes/:id - Delete a quiz (Admin only)
  */
 
 import { NextRequest } from 'next/server';
 import { authenticate, requireRole, createErrorResponse, createSuccessResponse } from '@/lib/api/middleware/auth';
 import { supabase } from '@/lib/api/config/supabase';
+import { z } from 'zod';
+
+const updateQuizSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  timeLimit: z.number().positive().optional(),
+  questions: z.array(
+    z.object({
+      questionText: z.string().min(1),
+      optionA: z.string().min(1),
+      optionB: z.string().min(1),
+      optionC: z.string().min(1),
+      optionD: z.string().min(1),
+      optionE: z.string().min(1),
+      correctAnswer: z.enum(['A', 'B', 'C', 'D', 'E']),
+      points: z.number().positive().default(1),
+      orderIndex: z.number().int().nonnegative()
+    })
+  ).min(1)
+});
 
 export async function GET(
   request: NextRequest,
@@ -138,6 +159,91 @@ export async function GET(
       return createErrorResponse('Missing or invalid authorization header', 401);
     }
     return createErrorResponse(error.message || 'Failed to fetch quiz', 500);
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await authenticate(request);
+    requireRole(user, 'admin');
+
+    const body = await request.json();
+    const { title, description, timeLimit, questions } = updateQuizSchema.parse(body);
+
+    const { data: quiz, error: fetchError } = await supabase
+      .from('quizzes')
+      .select('id, created_by')
+      .eq('id', params.id)
+      .single();
+
+    if (fetchError || !quiz) {
+      return createErrorResponse('Quiz not found', 404);
+    }
+
+    if (quiz.created_by !== user.id) {
+      return createErrorResponse('You can only edit your own quizzes', 403);
+    }
+
+    const { error: updateError } = await supabase
+      .from('quizzes')
+      .update({
+        title,
+        description: description ?? null,
+        time_limit: timeLimit ?? null
+      })
+      .eq('id', params.id);
+
+    if (updateError) throw updateError;
+
+    await supabase.from('quiz_questions').delete().eq('quiz_id', params.id);
+
+    const questionsData = questions.map(q => ({
+      quiz_id: params.id,
+      question_text: q.questionText,
+      option_a: q.optionA,
+      option_b: q.optionB,
+      option_c: q.optionC,
+      option_d: q.optionD,
+      option_e: q.optionE,
+      correct_answer: q.correctAnswer,
+      points: q.points,
+      order_index: q.orderIndex
+    }));
+
+    const { data: createdQuestions, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .insert(questionsData)
+      .select();
+
+    if (questionsError) throw questionsError;
+
+    const { data: updatedQuiz } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('id', params.id)
+      .single();
+
+    return createSuccessResponse({
+      message: 'Quiz updated successfully',
+      quiz: {
+        ...updatedQuiz,
+        questions: createdQuestions
+      }
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return createErrorResponse('Validation error', 400);
+    }
+    if (error.message?.includes('authorization')) {
+      return createErrorResponse('Missing or invalid authorization header', 401);
+    }
+    if (error.message?.includes('requires')) {
+      return createErrorResponse(error.message, 403);
+    }
+    return createErrorResponse(error.message || 'Failed to update quiz', 500);
   }
 }
 
