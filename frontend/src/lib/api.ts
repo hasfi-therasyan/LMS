@@ -75,6 +75,7 @@ export const apiClient = {
   getQuizzes: () => api.get('/quizzes'),
   getQuiz: (id: string) => api.get(`/quizzes/${id}`),
   createQuiz: (data: any) => api.post('/quizzes', data),
+  updateQuiz: (id: string, data: any) => api.put(`/quizzes/${id}`, data),
   deleteQuiz: (id: string) => api.delete(`/quizzes/${id}`),
   submitQuiz: (quizId: string, answers: Array<{ questionId: string; answer: string }>) =>
     api.post(`/quizzes/${quizId}/submit`, { answers }),
