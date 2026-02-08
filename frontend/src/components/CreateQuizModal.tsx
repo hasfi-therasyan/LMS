@@ -110,6 +110,7 @@ export default function CreateQuizModal({
         optionB: q.optionB,
         optionC: q.optionC,
         optionD: q.optionD,
+        optionE: q.optionE,
         correctAnswer: q.correctAnswer,
         points: q.points,
         orderIndex: index
@@ -127,7 +128,8 @@ export default function CreateQuizModal({
       onSuccess();
       handleClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create quiz');
+      const msg = error.response?.data?.error || error.response?.data?.message || 'Failed to create quiz';
+      toast.error(msg);
     } finally {
       setCreating(false);
     }
