@@ -491,7 +491,8 @@ const submitQuizSchema = z.object({
       questionId: z.string().uuid(),
       answer: z.enum(['A', 'B', 'C', 'D', 'E'])
     })
-  )
+  ),
+  startedAt: z.string().optional()
 });
 
 router.post(
@@ -501,7 +502,7 @@ router.post(
   async (req, res) => {
     try {
       const quizId = req.params.id;
-      const { answers } = submitQuizSchema.parse(req.body);
+      const { answers, startedAt } = submitQuizSchema.parse(req.body);
 
       // Get quiz and questions
       const { data: quiz, error: quizError } = await supabase
@@ -590,14 +591,15 @@ router.post(
         }
       }
 
-      // Create submission
+      // Create submission (started_at for duration tracking)
       const { data: submission, error: submissionError } = await supabase
         .from('quiz_submissions')
         .insert({
           quiz_id: quizId,
           student_id: req.user!.id,
           score: totalScore,
-          total_points: totalPoints
+          total_points: totalPoints,
+          ...(startedAt && { started_at: startedAt })
         })
         .select()
         .single();
