@@ -136,7 +136,8 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
         );
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to submit quiz');
+      const msg = error.response?.data?.error || error.response?.data?.message || 'Failed to submit quiz';
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
