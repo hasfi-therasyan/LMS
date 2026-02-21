@@ -137,20 +137,10 @@ export async function POST(
       content
     });
 
-    // Add special instruction if correct answer detected
+    // Add special instruction if correct answer detected — do NOT tell AI to state the answer
     if (correctAnswerDetected) {
-      context += `\n\n🎯 PENTING: Mahasiswa baru saja memberikan JAWABAN YANG BENAR (${correctAnswer}) dalam pesan mereka!
-        
-        Anda HARUS:
-        1. Segera puji mereka dengan antusias: "Bagus sekali! Jawabanmu benar!" atau "Luar biasa! Kamu sudah memahaminya!"
-        2. Konfirmasi pemahaman mereka: "Kamu telah menunjukkan bahwa kamu memahami konsepnya dengan benar."
-        3. Tanyakan apakah ada pertanyaan lain: "Apakah ada hal lain yang ingin kamu tanyakan tentang topik ini atau pertanyaan lainnya?"
-        4. Bersikaplah hangat, mendorong, dan rayakan kesuksesan mereka
-        5. Selalu akhiri dengan menanyakan apakah mereka membutuhkan bantuan dengan pertanyaan lain
-        
-        Ini adalah momen sukses - buat mereka merasa bangga dengan pemahaman mereka!
-        
-        WAJIB: Gunakan BAHASA INDONESIA dalam respons Anda.`;
+      context += `\n\n🎯 Mahasiswa baru saja menulis jawaban yang benar dalam pesan mereka (sistem mendeteksi otomatis).
+        Anda HARUS: (1) Puji dengan antusias, misalnya "Bagus sekali! Jawabanmu benar!" (2) Konfirmasi pemahaman mereka. (3) Tanyakan apakah ada pertanyaan lain. JANGAN tulis atau sebut huruf jawaban (A/B/C/D/E) dalam respons—cukup puji dan tutup diskusi. BAHASA INDONESIA.`;
     }
 
     // Generate AI response
