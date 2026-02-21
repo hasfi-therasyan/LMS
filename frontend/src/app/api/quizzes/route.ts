@@ -43,9 +43,10 @@ export async function GET(request: NextRequest) {
       )
     `);
 
-    // Mahasiswa can see ALL quizzes
-    // Admins can see quizzes in their classes
-    if (user.role === 'admin') {
+    if (user.role === 'mahasiswa') {
+      // Mahasiswa only see published (online) quizzes
+      query = query.eq('is_published', true);
+    } else if (user.role === 'admin') {
       const { data: classes } = await supabase
         .from('classes')
         .select('id')
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create quiz
+    // Create quiz (draft; admin uses Upload to publish to mahasiswa)
     const { data: quiz, error: quizError } = await supabase
       .from('quizzes')
       .insert({
@@ -127,7 +128,8 @@ export async function POST(request: NextRequest) {
         title,
         description: description || null,
         time_limit: timeLimit || null,
-        created_by: user.id
+        created_by: user.id,
+        is_published: false
       })
       .select()
       .single();

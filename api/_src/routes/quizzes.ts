@@ -118,7 +118,7 @@ router.post(
         console.warn('⚠ Class has no file_url, quiz created without extracted text. AI chatbot will work without module context.');
       }
 
-      // Create quiz
+      // Create quiz (draft; admin uses Upload to publish)
       const { data: quiz, error: quizError } = await supabase
         .from('quizzes')
         .insert({
@@ -126,7 +126,8 @@ router.post(
           title,
           description: description || null,
           time_limit: timeLimit || null,
-          created_by: req.user!.id
+          created_by: req.user!.id,
+          is_published: false
         })
         .select()
         .single();
@@ -198,11 +199,9 @@ router.get('/', authenticate, async (req, res) => {
       )
     `);
 
-    // Mahasiswa can see ALL quizzes (no enrollment required)
-    // No filtering needed for mahasiswa
-    
-    // Admins can see quizzes in their classes
-    if (req.user!.role === 'admin') {
+    if (req.user!.role === 'mahasiswa') {
+      query = query.eq('is_published', true);
+    } else if (req.user!.role === 'admin') {
       const { data: classes } = await supabase
         .from('classes')
         .select('id')
@@ -252,6 +251,13 @@ router.get('/:id', authenticate, async (req, res) => {
       .single();
 
     if (quizError || !quiz) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: 'Quiz not found'
+      });
+    }
+
+    if ((req.user!.role === 'mahasiswa' || req.user!.role === 'student') && !quiz.is_published) {
       return res.status(404).json({
         error: 'Not found',
         message: 'Quiz not found'
@@ -687,6 +693,65 @@ router.delete(
     } catch (error: any) {
       res.status(500).json({
         error: 'Failed to delete quiz',
+        message: error.message
+      });
+    }
+  }
+);
+
+/**
+ * PATCH /api/quizzes/:id/publish
+ * Set quiz visibility to mahasiswa (Upload = publish, Archive = unpublish). Admin only.
+ */
+router.patch(
+  '/:id/publish',
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const quizId = req.params.id;
+      const { is_published } = req.body;
+      if (typeof is_published !== 'boolean') {
+        return res.status(400).json({
+          error: 'Validation error',
+          message: 'is_published must be a boolean'
+        });
+      }
+
+      const { data: quiz, error: fetchError } = await supabase
+        .from('quizzes')
+        .select('id, created_by')
+        .eq('id', quizId)
+        .single();
+
+      if (fetchError || !quiz) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Quiz not found'
+        });
+      }
+
+      if (quiz.created_by !== req.user!.id) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          message: 'You can only update your own quizzes'
+        });
+      }
+
+      const { error: updateError } = await supabase
+        .from('quizzes')
+        .update({ is_published })
+        .eq('id', quizId);
+
+      if (updateError) throw updateError;
+
+      res.json({
+        message: is_published ? 'Quiz published (visible to mahasiswa)' : 'Quiz archived (hidden from mahasiswa)',
+        is_published
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: 'Failed to update quiz visibility',
         message: error.message
       });
     }
