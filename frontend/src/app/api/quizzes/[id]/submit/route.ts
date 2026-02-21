@@ -97,7 +97,8 @@ export async function POST(
           questionId: question.id,
           questionText: question.question_text,
           studentAnswer: studentAnswer?.answer || 'No answer',
-          correctAnswer: question.correct_answer
+          correctAnswer: question.correct_answer,
+          questionNumber: (question.order_index != null ? question.order_index : 0) + 1
         });
       }
     }

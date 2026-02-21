@@ -318,11 +318,13 @@ router.get('/:id', authenticate, async (req, res) => {
         sortedAnswers.forEach((answer: any) => {
           const question = answer.quiz_questions;
           if (!answer.is_correct && question) {
+            const orderIndex = question.order_index ?? 0;
             incorrectQuestions.push({
               questionId: question.id,
               questionText: question.question_text,
               studentAnswer: answer.student_answer,
-              correctAnswer: question.correct_answer
+              correctAnswer: question.correct_answer,
+              questionNumber: orderIndex + 1
             });
           }
         });
@@ -573,13 +575,14 @@ router.post(
           points_earned: pointsEarned
         });
 
-        // Track incorrect questions for AI chatbot
+        // Track incorrect questions for AI chatbot (questionNumber = nomor asli di quiz)
         if (!isCorrect) {
           incorrectQuestions.push({
             questionId: question.id,
             questionText: question.question_text,
             studentAnswer: studentAnswer?.answer || 'No answer',
-            correctAnswer: question.correct_answer
+            correctAnswer: question.correct_answer,
+            questionNumber: (question.order_index != null ? question.order_index : 0) + 1
           });
         }
       }
