@@ -172,7 +172,13 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
     const isPassing = percentage >= 70;
     
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div
+        className="max-w-4xl mx-auto p-6 select-none"
+        style={{ WebkitUserSelect: 'none', userSelect: 'none' } as React.CSSProperties}
+        onContextMenu={(e) => e.preventDefault()}
+        onCopy={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+      >
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Quiz Results & Summary</h2>
@@ -288,25 +294,22 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
                           {['A', 'B', 'C', 'D', 'E'].map((option) => {
                             const optionKey = `option_${option.toLowerCase()}` as keyof typeof question;
                             const optionText = question[optionKey] as string;
-                            
                             const isStudentAnswer = answer.student_answer === option;
-                            const isCorrectAnswer = question.correct_answer === option;
-                            
                             return (
                               <div
                                 key={option}
                                 className={`p-2 rounded border ${
-                                  isCorrectAnswer
-                                    ? 'border-green-500 bg-green-100'
-                                    : isStudentAnswer && !isCorrect
-                                      ? 'border-red-500 bg-red-100'
+                                  isStudentAnswer && !isCorrect
+                                    ? 'border-red-500 bg-red-100'
+                                    : isStudentAnswer && isCorrect
+                                      ? 'border-green-500 bg-green-100'
                                       : 'border-gray-200 bg-white'
                                 }`}
                               >
                                 <div className="flex items-center space-x-2">
                                   <span className="font-medium">{option}.</span>
                                   <span className="text-sm">{optionText}</span>
-                                  {isCorrectAnswer && (
+                                  {isStudentAnswer && isCorrect && (
                                     <span className="ml-auto text-green-600 font-bold">✓</span>
                                   )}
                                   {isStudentAnswer && !isCorrect && (
@@ -319,10 +322,9 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
                         </div>
                         
                         {!isCorrect && (
-                          <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                          <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded">
                             <p className="text-xs text-gray-600">
-                              <span className="font-semibold">Your answer:</span> {answer.student_answer} | 
-                              <span className="font-semibold"> Correct answer:</span> {question.correct_answer}
+                              <span className="font-semibold">Jawaban Anda:</span> {answer.student_answer}. Diskusikan dengan AI Tutor untuk memahami jawaban yang benar.
                             </p>
                           </div>
                         )}
@@ -349,13 +351,10 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
                     className="border border-red-200 rounded-lg p-4 bg-red-50"
                   >
                     <p className="font-semibold mb-2">
-                      Question {index + 1}: {incorrect.questionText}
-                    </p>
-                    <p className="text-sm text-gray-600 mb-2">
-                      Your answer: <span className="font-medium text-red-600">{incorrect.studentAnswer}</span>
+                      Pertanyaan {index + 1}: {incorrect.questionText}
                     </p>
                     <p className="text-sm text-gray-600 mb-4">
-                      Correct answer: <span className="font-medium text-green-600">{incorrect.correctAnswer}</span>
+                      Jawaban Anda: <span className="font-medium text-red-600">{incorrect.studentAnswer}</span>. Klik tombol di bawah untuk berdiskusi dengan AI Tutor dan menemukan jawaban yang benar.
                     </p>
                     <button
                       onClick={() => setActiveChatQuestionId(incorrect.questionId)}
@@ -408,7 +407,13 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div
+      className="max-w-4xl mx-auto p-6 select-none"
+      style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
+    >
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
         {quiz.description && (
