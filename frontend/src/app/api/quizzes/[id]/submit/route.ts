@@ -14,7 +14,8 @@ const submitQuizSchema = z.object({
       questionId: z.string().uuid(),
       answer: z.enum(['A', 'B', 'C', 'D', 'E'])
     })
-  )
+  ),
+  startedAt: z.string().optional() // ISO string when student opened the quiz
 });
 
 export async function POST(
@@ -26,7 +27,7 @@ export async function POST(
     requireRole(user, 'mahasiswa');
 
     const body = await request.json();
-    const { answers } = submitQuizSchema.parse(body);
+    const { answers, startedAt } = submitQuizSchema.parse(body);
 
     // Get quiz and questions
     const { data: quiz, error: quizError } = await supabase
@@ -103,14 +104,15 @@ export async function POST(
       }
     }
 
-    // Create submission
+    // Create submission (started_at = when student opened quiz, for duration tracking)
     const { data: submission, error: submissionError } = await supabase
       .from('quiz_submissions')
       .insert({
         quiz_id: params.id,
         student_id: user.id,
         score: totalScore,
-        total_points: totalPoints
+        total_points: totalPoints,
+        ...(startedAt && { started_at: startedAt })
       })
       .select()
       .single();

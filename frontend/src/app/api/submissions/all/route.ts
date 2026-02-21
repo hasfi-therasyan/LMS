@@ -12,8 +12,13 @@ export async function GET(request: NextRequest) {
     const user = await authenticate(request);
     requireRole(user, 'admin');
 
-    // Get all quiz submissions with student and quiz info
-    const { data: submissions, error } = await supabase
+    const { data: adminQuizzes } = await supabase
+      .from('quizzes')
+      .select('id')
+      .eq('created_by', user.id);
+    const quizIds = (adminQuizzes || []).map((q: any) => q.id);
+
+    let query = supabase
       .from('quiz_submissions')
       .select(`
         *,
@@ -33,6 +38,14 @@ export async function GET(request: NextRequest) {
         )
       `)
       .order('submitted_at', { ascending: false });
+
+    if (quizIds.length > 0) {
+      query = query.in('quiz_id', quizIds);
+    } else {
+      return createSuccessResponse([]);
+    }
+
+    const { data: submissions, error } = await query;
 
     if (error) {
       throw error;

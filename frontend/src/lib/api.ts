@@ -79,8 +79,8 @@ export const apiClient = {
   setQuizPublish: (id: string, isPublished: boolean) =>
     api.patch(`/quizzes/${id}/publish`, { is_published: isPublished }),
   deleteQuiz: (id: string) => api.delete(`/quizzes/${id}`),
-  submitQuiz: (quizId: string, answers: Array<{ questionId: string; answer: string }>) =>
-    api.post(`/quizzes/${quizId}/submit`, { answers }),
+  submitQuiz: (quizId: string, data: { answers: Array<{ questionId: string; answer: string }>; startedAt?: string }) =>
+    api.post(`/quizzes/${quizId}/submit`, data),
 
   // AI Chat
   startChat: (submissionId: string, questionId: string) =>

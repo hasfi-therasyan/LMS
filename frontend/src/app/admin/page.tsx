@@ -164,13 +164,19 @@ export default function AdminDashboard() {
         // Get assignments for this student
         const studentAssignments = assignmentsData.filter(a => a.student_id === student.id);
         
-        // Calculate statistics
-        const quizScores = studentSubmissions.map((s: any) => ({
-          score: Math.round((s.score / s.total_points) * 100),
-          quizTitle: s.quizzes?.title || 'Quiz',
-          date: new Date(s.submitted_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
-          dateValue: new Date(s.submitted_at).getTime()
-        }));
+        // Calculate statistics (duration = submitted_at - started_at when started_at exists)
+        const quizScores = studentSubmissions.map((s: any) => {
+          const durationMinutes = s.started_at
+            ? Math.round((new Date(s.submitted_at).getTime() - new Date(s.started_at).getTime()) / 60000)
+            : null;
+          return {
+            score: Math.round((s.score / s.total_points) * 100),
+            quizTitle: s.quizzes?.title || 'Quiz',
+            date: new Date(s.submitted_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+            dateValue: new Date(s.submitted_at).getTime(),
+            durationMinutes
+          };
+        });
         
         const assignmentScores = studentAssignments
           .filter(a => a.grade !== null)
@@ -749,34 +755,103 @@ export default function AdminDashboard() {
           ) : (
             <div className="space-y-6">
               {/* Overall Statistics */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="card p-4">
-                  <p className="text-sm text-gray-600">Total Students</p>
-                  <p className="text-2xl font-bold text-gray-900">{studentGrades.length}</p>
-                </div>
-                <div className="card p-4">
-                  <p className="text-sm text-gray-600">Students with Quizzes</p>
-                  <p className="text-2xl font-bold text-primary-600">
-                    {studentGrades.filter(s => s.totalQuizzes > 0).length}
-                  </p>
-                </div>
-                <div className="card p-4">
-                  <p className="text-sm text-gray-600">Students with Assignments</p>
-                  <p className="text-2xl font-bold text-success-600">
-                    {studentGrades.filter(s => s.totalAssignments > 0).length}
-                  </p>
-                </div>
-                <div className="card p-4">
-                  <p className="text-sm text-gray-600">Average Score (All)</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {studentGrades.length > 0
-                      ? Math.round(
-                          studentGrades.reduce((sum, s) => sum + s.averageScore, 0) / studentGrades.length
-                        )
-                      : 0}%
-                  </p>
-                </div>
-              </div>
+              {(() => {
+                const allQuizSubmissions = studentGrades.flatMap((s: any) => (s.quizSubmissions || []));
+                const withDuration = allQuizSubmissions.filter((s: any) => s.started_at);
+                const durations = withDuration.map((s: any) =>
+                  Math.round((new Date(s.submitted_at).getTime() - new Date(s.started_at).getTime()) / 60000)
+                );
+                const avgDuration = durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
+                const minDuration = durations.length > 0 ? Math.min(...durations) : null;
+                const maxDuration = durations.length > 0 ? Math.max(...durations) : null;
+                return (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="card p-4">
+                        <p className="text-sm text-gray-600">Total Students</p>
+                        <p className="text-2xl font-bold text-gray-900">{studentGrades.length}</p>
+                      </div>
+                      <div className="card p-4">
+                        <p className="text-sm text-gray-600">Students with Quizzes</p>
+                        <p className="text-2xl font-bold text-primary-600">
+                          {studentGrades.filter((s: any) => s.totalQuizzes > 0).length}
+                        </p>
+                      </div>
+                      <div className="card p-4">
+                        <p className="text-sm text-gray-600">Students with Assignments</p>
+                        <p className="text-2xl font-bold text-success-600">
+                          {studentGrades.filter((s: any) => s.totalAssignments > 0).length}
+                        </p>
+                      </div>
+                      <div className="card p-4">
+                        <p className="text-sm text-gray-600">Average Score (All)</p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {studentGrades.length > 0
+                            ? Math.round(
+                                studentGrades.reduce((sum: number, s: any) => sum + s.averageScore, 0) / studentGrades.length
+                              )
+                            : 0}%
+                        </p>
+                      </div>
+                    </div>
+                    {/* Quiz duration stats */}
+                    {withDuration.length > 0 && (
+                      <div className="card p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Statistik Durasi Pengerjaan Quiz</h3>
+                        <p className="text-sm text-gray-600 mb-4">Durasi dihitung dari saat mahasiswa membuka quiz sampai submit (hanya submission dengan data durasi).</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                          <div className="p-4 bg-blue-50 rounded-lg">
+                            <p className="text-xs text-gray-600">Submissions dengan durasi</p>
+                            <p className="text-2xl font-bold text-blue-700">{withDuration.length}</p>
+                          </div>
+                          <div className="p-4 bg-green-50 rounded-lg">
+                            <p className="text-xs text-gray-600">Rata-rata durasi</p>
+                            <p className="text-2xl font-bold text-green-700">{avgDuration != null ? `${avgDuration} menit` : '—'}</p>
+                          </div>
+                          <div className="p-4 bg-amber-50 rounded-lg">
+                            <p className="text-xs text-gray-600">Durasi tercepat</p>
+                            <p className="text-2xl font-bold text-amber-700">{minDuration != null ? `${minDuration} menit` : '—'}</p>
+                          </div>
+                          <div className="p-4 bg-red-50 rounded-lg">
+                            <p className="text-xs text-gray-600">Durasi terlama</p>
+                            <p className="text-2xl font-bold text-red-700">{maxDuration != null ? `${maxDuration} menit` : '—'}</p>
+                          </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-gray-200 text-left text-gray-600">
+                                <th className="py-2 pr-2">Quiz</th>
+                                <th className="py-2 pr-2">Mahasiswa</th>
+                                <th className="py-2 pr-2">Skor</th>
+                                <th className="py-2 pr-2">Durasi</th>
+                                <th className="py-2">Tanggal</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {withDuration
+                                .sort((a: any, b: any) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
+                                .map((s: any) => {
+                                  const durationMin = Math.round((new Date(s.submitted_at).getTime() - new Date(s.started_at).getTime()) / 60000);
+                                  const student = studentGrades.find((g: any) => g.id === s.student_id);
+                                  return (
+                                    <tr key={s.id} className="border-b border-gray-100">
+                                      <td className="py-2 pr-2 font-medium">{s.quizzes?.title || 'Quiz'}</td>
+                                      <td className="py-2 pr-2">{student?.name || s.profiles?.full_name || '—'}</td>
+                                      <td className="py-2 pr-2">{s.score} / {s.total_points}</td>
+                                      <td className="py-2 pr-2">{durationMin} menit</td>
+                                      <td className="py-2">{new Date(s.submitted_at).toLocaleDateString('id-ID')}</td>
+                                    </tr>
+                                  );
+                                })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {/* Student List */}
               <div className="card">
@@ -902,6 +977,9 @@ export default function AdminDashboard() {
                         <div className="space-y-3">
                           {student.quizSubmissions.map((submission: any) => {
                             const percentage = Math.round((submission.score / submission.total_points) * 100);
+                            const durationMinutes = submission.started_at
+                              ? Math.round((new Date(submission.submitted_at).getTime() - new Date(submission.started_at).getTime()) / 60000)
+                              : null;
                             return (
                               <div key={submission.id} className="card p-4">
                                 <div className="flex items-center justify-between">
@@ -910,6 +988,9 @@ export default function AdminDashboard() {
                                     <p className="text-sm text-gray-600">
                                       {submission.quizzes?.classes?.code || 'N/A'} - {submission.quizzes?.classes?.name || 'No class'}
                                     </p>
+                                    {durationMinutes != null && (
+                                      <p className="text-xs text-primary-600 mt-1">Durasi: {durationMinutes} menit</p>
+                                    )}
                                   </div>
                                   <div className="text-right">
                                     <p className="font-bold text-lg">

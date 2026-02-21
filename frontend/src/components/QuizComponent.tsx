@@ -73,6 +73,7 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeChatQuestionId, setActiveChatQuestionId] = useState<string | null>(null);
+  const [quizOpenedAt, setQuizOpenedAt] = useState<string | null>(null);
 
   useEffect(() => {
     loadQuiz();
@@ -84,10 +85,11 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
       const quizData = response.data;
       setQuiz(quizData);
       
-      // If student already submitted, show results immediately
       if (quizData.alreadySubmitted && quizData.submission) {
         setSubmission(quizData.submission);
         setSubmitted(true);
+      } else {
+        setQuizOpenedAt(new Date().toISOString());
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to load quiz');
@@ -129,7 +131,10 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
         answer: answers[q.id]
       }));
 
-      const response = await apiClient.submitQuiz(quizId, answerArray);
+      const response = await apiClient.submitQuiz(quizId, {
+        answers: answerArray,
+        ...(quizOpenedAt && { startedAt: quizOpenedAt })
+      });
       setSubmission(response.data.submission);
       setSubmitted(true);
       toast.success('Quiz submitted successfully!');
