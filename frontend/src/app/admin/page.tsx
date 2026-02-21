@@ -226,7 +226,11 @@ export default function AdminDashboard() {
   const handleSetQuizPublish = async (quizId: string, isPublished: boolean) => {
     try {
       await apiClient.setQuizPublish(quizId, isPublished);
-      toast.success(isPublished ? 'Quiz dipublikasikan (tampil untuk mahasiswa)' : 'Quiz diarsipkan (disembunyikan dari mahasiswa)');
+      if (isPublished) {
+        toast.success('Quiz dipublikasikan. Nilai mahasiswa yang sudah mengerjakan tetap tersimpan.');
+      } else {
+        toast.success('Quiz diarsipkan (disembunyikan dari mahasiswa). Nilai yang sudah ada tidak berubah.');
+      }
       loadData();
     } catch (error: any) {
       toast.error(error.response?.data?.error || error.response?.data?.message || 'Gagal mengubah status quiz');

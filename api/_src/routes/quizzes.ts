@@ -702,6 +702,7 @@ router.delete(
 /**
  * PATCH /api/quizzes/:id/publish
  * Set quiz visibility to mahasiswa (Upload = publish, Archive = unpublish). Admin only.
+ * Only updates quizzes.is_published; submissions and scores are never deleted or reset.
  */
 router.patch(
   '/:id/publish',
@@ -738,6 +739,7 @@ router.patch(
         });
       }
 
+      // Only update visibility; never touch quiz_submissions or quiz_answers
       const { error: updateError } = await supabase
         .from('quizzes')
         .update({ is_published })
