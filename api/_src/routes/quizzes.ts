@@ -292,6 +292,7 @@ router.get('/:id', authenticate, async (req, res) => {
               option_b,
               option_c,
               option_d,
+              option_e,
               correct_answer,
               points,
               order_index
@@ -329,6 +330,7 @@ router.get('/:id', authenticate, async (req, res) => {
             option_b: q.option_b,
             option_c: q.option_c,
             option_d: q.option_d,
+            option_e: q.option_e,
             points: q.points,
             order_index: q.order_index
           })),
@@ -349,6 +351,7 @@ router.get('/:id', authenticate, async (req, res) => {
         option_b: q.option_b,
         option_c: q.option_c,
         option_d: q.option_d,
+        option_e: q.option_e,
         points: q.points,
         order_index: q.order_index
       }));
