@@ -326,7 +326,7 @@ export default function AdminDashboard() {
     <LMSLayout
       navItems={navItems}
       title="Admin Dashboard"
-      subtitle="Manage your learning management system"
+      subtitle="Manage your Wiwik's Smart Classroom platform"
     >
       {/* Overview Section */}
       {activeSection === 'overview' && (

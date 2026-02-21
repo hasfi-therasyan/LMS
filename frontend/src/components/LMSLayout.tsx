@@ -79,8 +79,8 @@ export default function LMSLayout({ children, navItems, title, subtitle }: LMSLa
             </div>
             {sidebarOpen && (
               <div className="animate-fade-in">
-                <h1 className="text-lg font-bold text-white">LMS Platform</h1>
-                <p className="text-xs text-primary-100">Learning Management</p>
+                <h1 className="text-lg font-bold text-white">Wiwik's Smart Classroom</h1>
+                <p className="text-xs text-primary-100">Analytical AI Flipped Learning System</p>
               </div>
             )}
           </div>
