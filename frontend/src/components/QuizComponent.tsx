@@ -105,6 +105,11 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
   const handleSubmit = async () => {
     if (!quiz) return;
 
+    if (quiz.alreadySubmitted) {
+      toast.error('You have already submitted this quiz.');
+      return;
+    }
+
     // Check if all questions are answered
     const unanswered = quiz.questions.filter(
       (q) => !answers[q.id]

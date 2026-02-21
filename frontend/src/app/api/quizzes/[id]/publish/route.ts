@@ -1,6 +1,7 @@
 /**
  * PATCH /api/quizzes/:id/publish
  * Set quiz visibility to mahasiswa (Upload = publish, Archive = unpublish). Admin only.
+ * Only updates quizzes.is_published. Submissions and scores are never deleted or reset.
  */
 
 import { NextRequest } from 'next/server';
@@ -35,6 +36,7 @@ export async function PATCH(
       return createErrorResponse('You can only update your own quizzes', 403);
     }
 
+    // Only update visibility; never touch quiz_submissions or quiz_answers
     const { error: updateError } = await supabase
       .from('quizzes')
       .update({ is_published })

@@ -411,16 +411,18 @@ export default function StudentDashboard() {
               <div className="space-y-3">
                 {(() => {
                   // Combine quiz submissions and graded assignments
-                  const quizGrades = submissions.map(s => ({
-                    id: s.id,
-                    type: 'quiz' as const,
-                    title: s.quizzes.title,
-                    score: s.score,
-                    total: s.total_points,
-                    percentage: Math.round((s.score / s.total_points) * 100),
-                    date: s.submitted_at,
-                    classInfo: s.quizzes.classes
-                  }));
+                  const quizGrades = submissions
+                    .filter(s => s.quizzes && s.total_points > 0)
+                    .map(s => ({
+                      id: s.id,
+                      type: 'quiz' as const,
+                      title: s.quizzes?.title || 'Quiz',
+                      score: s.score,
+                      total: s.total_points,
+                      percentage: Math.round((s.score / s.total_points) * 100),
+                      date: s.submitted_at,
+                      classInfo: s.quizzes?.classes
+                    }));
                   
                   const assignmentGrades = assignments
                     .filter(a => a.grade !== null)
@@ -762,7 +764,7 @@ export default function StudentDashboard() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quizzes.map((quiz) => {
-              const submission = submissions.find(s => s.quizzes.id === quiz.id);
+              const submission = submissions.find(s => s.quizzes?.id === quiz.id);
               const percentage = submission ? Math.round((submission.score / submission.total_points) * 100) : null;
               
               return (
@@ -774,12 +776,15 @@ export default function StudentDashboard() {
                       </svg>
                     </div>
                     {submission && (
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        percentage! >= 70 ? 'bg-success-100 text-success-700' :
-                        percentage! >= 50 ? 'bg-warning-100 text-warning-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {percentage}%
+                      <span className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-700">Selesai</span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          percentage! >= 70 ? 'bg-success-100 text-success-700' :
+                          percentage! >= 50 ? 'bg-warning-100 text-warning-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {percentage}%
+                        </span>
                       </span>
                     )}
                   </div>
@@ -835,6 +840,36 @@ export default function StudentDashboard() {
             <h2 className="text-2xl font-bold text-gray-900 mb-2">My Grades</h2>
             <p className="text-sm text-gray-600">View your quiz and assignment results</p>
           </div>
+
+          {/* Stats Summary: Quiz & Assignments */}
+          {(() => {
+            const quizSubs = submissions.filter(s => s.quizzes && s.total_points > 0);
+            const gradedAssignments = assignments.filter(a => a.grade !== null && a.grade !== undefined);
+            const quizAvg = quizSubs.length > 0
+              ? Math.round(quizSubs.reduce((sum, s) => sum + (s.score / s.total_points) * 100, 0) / quizSubs.length)
+              : null;
+            const assignmentAvg = gradedAssignments.length > 0
+              ? Math.round(gradedAssignments.reduce((sum, a) => sum + (a.grade as number), 0) / gradedAssignments.length)
+              : null;
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="card border-l-4 border-l-primary-500">
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">Quiz</h3>
+                  <p className="text-2xl font-bold text-gray-900">{quizSubs.length} selesai</p>
+                  {quizAvg !== null && (
+                    <p className="text-sm text-gray-600 mt-1">Rata-rata: <span className="font-semibold text-primary-600">{quizAvg}%</span></p>
+                  )}
+                </div>
+                <div className="card border-l-4 border-l-accent-500">
+                  <h3 className="text-sm font-semibold text-gray-600 mb-1">Assignment</h3>
+                  <p className="text-2xl font-bold text-gray-900">{gradedAssignments.length} dinilai</p>
+                  {assignmentAvg !== null && (
+                    <p className="text-sm text-gray-600 mt-1">Rata-rata: <span className="font-semibold text-accent-600">{assignmentAvg}%</span></p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Grades Chart */}
           {(() => {
@@ -1018,7 +1053,7 @@ export default function StudentDashboard() {
               <div className="card overflow-hidden">
                 <div className="divide-y divide-gray-100">
                   {submissions
-                    .filter(s => s.quizzes && s.score !== undefined && s.total_points !== undefined)
+                    .filter(s => s.quizzes && s.score != null && s.total_points != null && s.total_points > 0)
                     .map((submission) => {
                 const percentage = Math.round((submission.score / submission.total_points) * 100);
                 return (
