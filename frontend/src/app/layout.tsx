@@ -6,8 +6,8 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SmartLMS - AI-Powered Learning Management System',
-  description: 'Smart Learning Management System with Integrated AI Chatbot for Higher Education',
+  title: "Wiwik's Smart Classroom - Analytical AI Flipped Learning System",
+  description: "Wiwik's Smart Classroom: Analytical AI Flipped Learning System for higher education.",
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },

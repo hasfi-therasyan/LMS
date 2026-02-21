@@ -137,8 +137,11 @@ function LoginContent() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">
-            Learning Management System
+            Wiwik's Smart Classroom
           </h1>
+          <p className="text-gray-500 text-sm mb-3">
+            Analytical AI Flipped Learning System
+          </p>
           <p className="text-gray-600 text-base">
             {isSignUp ? 'Create your account to get started' : 'Welcome back! Please sign in to continue'}
           </p>
