@@ -52,6 +52,10 @@ export async function GET(
       return createErrorResponse('Quiz not found', 404);
     }
 
+    if (user.role === 'mahasiswa' && !quiz.is_published) {
+      return createErrorResponse('Quiz not found', 404);
+    }
+
     // Get questions
     const { data: questions, error: questionsError } = await supabase
       .from('quiz_questions')
