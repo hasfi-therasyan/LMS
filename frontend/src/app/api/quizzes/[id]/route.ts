@@ -107,11 +107,13 @@ export async function GET(
         sortedAnswers.forEach((answer: any) => {
           const question = answer.quiz_questions;
           if (!answer.is_correct && question) {
+            const orderIndex = question.order_index ?? 0;
             incorrectQuestions.push({
               questionId: question.id,
               questionText: question.question_text,
               studentAnswer: answer.student_answer,
-              correctAnswer: question.correct_answer
+              correctAnswer: question.correct_answer,
+              questionNumber: orderIndex + 1
             });
           }
         });

@@ -43,6 +43,7 @@ interface QuizSubmission {
     questionText: string;
     studentAnswer: string;
     correctAnswer: string;
+    questionNumber?: number;
   }>;
   answers?: Array<{
     id: string;
@@ -351,7 +352,7 @@ export default function QuizComponent({ quizId }: { quizId: string }) {
                     className="border border-red-200 rounded-lg p-4 bg-red-50"
                   >
                     <p className="font-semibold mb-2">
-                      Pertanyaan {index + 1}: {incorrect.questionText}
+                      Pertanyaan {incorrect.questionNumber ?? index + 1}: {incorrect.questionText}
                     </p>
                     <p className="text-sm text-gray-600 mb-4">
                       Jawaban Anda: <span className="font-medium text-red-600">{incorrect.studentAnswer}</span>. Klik tombol di bawah untuk berdiskusi dengan AI Tutor dan menemukan jawaban yang benar.
