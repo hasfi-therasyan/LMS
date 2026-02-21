@@ -56,6 +56,7 @@ interface QuizSubmission {
       option_b: string;
       option_c: string;
       option_d: string;
+      option_e?: string;
       correct_answer: string;
       points: number;
       order_index: number;
