@@ -59,6 +59,7 @@ export function buildAIContext(
     option_b: string;
     option_c: string;
     option_d: string;
+    option_e?: string;
     correct_answer: string;
   }>,
   wrongQuestionText: string,
@@ -84,6 +85,7 @@ export function buildAIContext(
    B. ${q.option_b}
    C. ${q.option_c}
    D. ${q.option_d}
+   E. ${q.option_e ?? 'N/A'}
    (Jawaban benar diketahui sistem untuk deteksi saja—JANGAN tulis atau sebut dalam respons)`
   ).join('\n\n');
 

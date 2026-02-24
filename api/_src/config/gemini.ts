@@ -77,6 +77,7 @@ export function buildAIContext(
     option_b: string;
     option_c: string;
     option_d: string;
+    option_e: string;
     correct_answer: string;
   }>,
   wrongQuestionText: string,
@@ -90,18 +91,19 @@ export function buildAIContext(
   const questionNum = questionNumber !== undefined ? questionNumber : (questionIndex + 1);
 
   // Only include incorrect questions in context
-  const incorrectQuestions = allQuestions.filter((q, index) => {
+  const incorrectQuestions = allQuestions.filter((q) => {
     // For now, we only know about the current wrong question
     // In a full implementation, we'd pass all incorrect question info
     return q.question_text === wrongQuestionText;
   });
 
-  const quizContext = incorrectQuestions.map((q, index) => 
+  const quizContext = incorrectQuestions.map((q) => 
     `Pertanyaan ${questionNum}: ${q.question_text}
    A. ${q.option_a}
    B. ${q.option_b}
    C. ${q.option_c}
    D. ${q.option_d}
+   E. ${q.option_e}
    Jawaban Benar: ${q.correct_answer}`
   ).join('\n\n');
 

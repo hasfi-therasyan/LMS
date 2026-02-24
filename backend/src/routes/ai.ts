@@ -100,7 +100,7 @@ router.post(
       // Get all questions from the quiz for context
       const { data: allQuestions, error: questionsError } = await supabase
         .from('quiz_questions')
-        .select('question_text, option_a, option_b, option_c, option_d, correct_answer')
+        .select('question_text, option_a, option_b, option_c, option_d, option_e, correct_answer')
         .eq('quiz_id', (submission.quizzes as any).id)
         .order('order_index', { ascending: true });
 
@@ -293,7 +293,7 @@ router.post(
       // Get all questions from the quiz for context
       const { data: allQuestions, error: questionsError } = await supabase
         .from('quiz_questions')
-        .select('question_text, option_a, option_b, option_c, option_d, correct_answer')
+        .select('question_text, option_a, option_b, option_c, option_d, option_e, correct_answer')
         .eq('quiz_id', quiz.id)
         .order('order_index', { ascending: true });
 
