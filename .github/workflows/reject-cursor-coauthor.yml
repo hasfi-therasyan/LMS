@@ -1,0 +1,46 @@
+# Reject commits that add Co-authored-by: Cursor / cursoragent.
+# Keeps the GitHub contributor list human-only (see SECURITY.md).
+name: No Cursor co-author
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-commit-messages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject Co-authored-by Cursor / cursoragent
+        run: |
+          BAD_PATTERN='Co-authored-by: Cursor|cursoragent@cursor.com'
+          FOUND=0
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            REV="${{ github.event.before }}..${{ github.sha }}"
+            # Force push: before can be 0{40}, rev-list would then list nothing
+            if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+              REV="${{ github.sha }}"
+            fi
+          else
+            REV="origin/${{ github.base_ref }}..HEAD"
+          fi
+
+          for hash in $(git rev-list $REV 2>/dev/null); do
+            msg=$(git log -1 --format=%B "$hash")
+            if echo "$msg" | grep -qE "$BAD_PATTERN"; then
+              echo "::error::Commit $hash: do not use Co-authored-by: Cursor or cursoragent@cursor.com in commit messages (see SECURITY.md)."
+              FOUND=1
+            fi
+          done
+
+          if [ "$FOUND" = "1" ]; then
+            exit 1
+          fi
+          echo "No Cursor co-author in commit messages."
