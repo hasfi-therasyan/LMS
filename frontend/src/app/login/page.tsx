@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
-import toast from 'react-hot-toast';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,16 +26,13 @@ function LoginContent() {
     const error = searchParams.get('error');
     const message = searchParams.get('message');
     if (error === 'rate_limit') {
-      toast.error('Too many requests. Please wait a moment before trying again.', {
-        duration: 5000
-      });
+      setLoginError('Terlalu banyak percobaan. Silakan tunggu sebentar sebelum mencoba lagi.');
     } else if (error === 'login_failed' || error === 'invalid_credentials') {
       const errMsg =
         message && decodeURIComponent(message).length > 0
           ? decodeURIComponent(message)
           : 'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.';
       setLoginError(errMsg);
-      toast.error(errMsg, { duration: 5000 });
     }
   }, [searchParams]);
 
@@ -72,17 +68,15 @@ function LoginContent() {
             const profile = useAuthStore.getState().profile;
             
             if (profile) {
-              toast.success('Account created successfully! Welcome!');
               router.push('/student');
             } else {
-              toast.success('Account created! Please sign in.');
+              router.push('/');
             }
           } catch (error: any) {
             if (error.response?.status === 429) {
-              toast.error('Too many requests. Please wait a moment and try again.');
-            } else {
-              toast.success('Account created! Please sign in.');
+              setLoginError('Terlalu banyak percobaan. Silakan tunggu sebentar sebelum mencoba lagi.');
             }
+            if (error.response?.status !== 429) router.push('/');
           }
         }
       } else {
@@ -101,7 +95,6 @@ function LoginContent() {
               ? 'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
               : error.message || 'Gagal masuk. Silakan coba lagi.';
           setLoginError(errorText);
-          toast.error(errorText, { duration: 5000 });
           setLoading(false);
           return;
         }
@@ -132,9 +125,8 @@ function LoginContent() {
           } catch (profileError: any) {
             console.error('Profile load error:', profileError);
             if (profileError.response?.status === 429) {
-              toast.error('Too many requests. Please wait a moment and try again.');
+              setLoginError('Terlalu banyak percobaan. Silakan tunggu sebentar sebelum mencoba lagi.');
             } else {
-              // Still redirect, let the page handle it
               router.push('/');
             }
           }
@@ -147,7 +139,6 @@ function LoginContent() {
           ? 'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
           : error?.message || 'Terjadi kesalahan. Silakan coba lagi.';
       setLoginError(errorText);
-      toast.error(errorText, { duration: 5000 });
     } finally {
       setLoading(false);
     }
