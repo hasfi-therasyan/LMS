@@ -20,19 +20,30 @@ function LoginContent() {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Check for error query parameter
+  // Check for error query parameter (e.g. redirect back to login with message)
   useEffect(() => {
     const error = searchParams.get('error');
+    const message = searchParams.get('message');
     if (error === 'rate_limit') {
       toast.error('Too many requests. Please wait a moment before trying again.', {
         duration: 5000
       });
+    } else if (error === 'login_failed' || error === 'invalid_credentials') {
+      setLoginError(
+        message && decodeURIComponent(message).length > 0
+          ? decodeURIComponent(message)
+          : 'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
+      );
     }
   }, [searchParams]);
 
+  const clearLoginError = () => setLoginError(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError(null);
     setLoading(true);
 
     try {
@@ -83,15 +94,13 @@ function LoginContent() {
 
         if (error) {
           console.error('Login error:', error);
-          // Supabase returns "Invalid login credentials" for both wrong password and non-existent user
           const msg = (error.message || '').toLowerCase();
           if (msg.includes('invalid') && (msg.includes('credential') || msg.includes('login'))) {
-            toast.error(
-              'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.',
-              { duration: 6000 }
+            setLoginError(
+              'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
             );
           } else {
-            toast.error(error.message || 'Gagal masuk. Silakan coba lagi.');
+            setLoginError(error.message || 'Gagal masuk. Silakan coba lagi.');
           }
           setLoading(false);
           return;
@@ -132,15 +141,13 @@ function LoginContent() {
         }
       }
     } catch (error: any) {
-      // Only show generic toast if we didn't already show a specific login message
       const msg = (error?.message || '').toLowerCase();
       if (msg.includes('invalid') && (msg.includes('credential') || msg.includes('login'))) {
-        toast.error(
-          'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.',
-          { duration: 6000 }
+        setLoginError(
+          'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
         );
       } else {
-        toast.error(error?.message || 'Terjadi kesalahan. Silakan coba lagi.');
+        setLoginError(error?.message || 'Terjadi kesalahan. Silakan coba lagi.');
       }
     } finally {
       setLoading(false);
@@ -170,6 +177,15 @@ function LoginContent() {
 
         {/* Login Card */}
         <div className="card shadow-elevation-3 border-gray-200">
+          {loginError && (
+            <div
+              role="alert"
+              className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm"
+            >
+              <p className="font-medium">Login gagal</p>
+              <p className="mt-1">{loginError}</p>
+            </div>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit}>
             {isSignUp && (
               <div>
@@ -271,7 +287,7 @@ function LoginContent() {
 
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => { setIsSignUp(!isSignUp); clearLoginError(); }}
               className="w-full text-center text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
             >
               {isSignUp
