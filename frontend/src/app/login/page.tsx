@@ -31,11 +31,12 @@ function LoginContent() {
         duration: 5000
       });
     } else if (error === 'login_failed' || error === 'invalid_credentials') {
-      setLoginError(
+      const errMsg =
         message && decodeURIComponent(message).length > 0
           ? decodeURIComponent(message)
-          : 'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
-      );
+          : 'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.';
+      setLoginError(errMsg);
+      toast.error(errMsg, { duration: 5000 });
     }
   }, [searchParams]);
 
@@ -95,13 +96,12 @@ function LoginContent() {
         if (error) {
           console.error('Login error:', error);
           const msg = (error.message || '').toLowerCase();
-          if (msg.includes('invalid') && (msg.includes('credential') || msg.includes('login'))) {
-            setLoginError(
-              'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
-            );
-          } else {
-            setLoginError(error.message || 'Gagal masuk. Silakan coba lagi.');
-          }
+          const errorText =
+            msg.includes('invalid') && (msg.includes('credential') || msg.includes('login'))
+              ? 'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
+              : error.message || 'Gagal masuk. Silakan coba lagi.';
+          setLoginError(errorText);
+          toast.error(errorText, { duration: 5000 });
           setLoading(false);
           return;
         }
@@ -142,13 +142,12 @@ function LoginContent() {
       }
     } catch (error: any) {
       const msg = (error?.message || '').toLowerCase();
-      if (msg.includes('invalid') && (msg.includes('credential') || msg.includes('login'))) {
-        setLoginError(
-          'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
-        );
-      } else {
-        setLoginError(error?.message || 'Terjadi kesalahan. Silakan coba lagi.');
-      }
+      const errorText =
+        msg.includes('invalid') && (msg.includes('credential') || msg.includes('login'))
+          ? 'Login gagal. Email atau kata sandi salah, atau akun belum terdaftar. Periksa kembali atau daftar di bawah.'
+          : error?.message || 'Terjadi kesalahan. Silakan coba lagi.';
+      setLoginError(errorText);
+      toast.error(errorText, { duration: 5000 });
     } finally {
       setLoading(false);
     }
