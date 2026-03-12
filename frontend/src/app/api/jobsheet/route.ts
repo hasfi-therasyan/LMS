@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await authenticate(request);
 
-    let query = supabase.from('classes').select('*');
+    let query = supabase.from('classes').select('*').is('deleted_at', null);
 
     // Admins can only see their own jobsheets
     if (user.role === 'admin') {

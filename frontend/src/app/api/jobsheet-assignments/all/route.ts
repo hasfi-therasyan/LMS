@@ -12,11 +12,12 @@ export async function GET(request: NextRequest) {
     const user = await authenticate(request);
     requireRole(user, 'admin');
 
-    // Get all assignments from admin's jobsheets
+    // Get all assignments from admin's jobsheets (exclude soft-deleted)
     const { data: adminJobsheets, error: jobsheetError } = await supabase
       .from('classes')
       .select('id')
-      .eq('admin_id', user.id);
+      .eq('admin_id', user.id)
+      .is('deleted_at', null);
 
     if (jobsheetError) {
       throw jobsheetError;

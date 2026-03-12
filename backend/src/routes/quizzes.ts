@@ -64,11 +64,12 @@ router.post(
     try {
       const { classId, title, description, timeLimit, questions } = createQuizSchema.parse(req.body);
 
-      // Verify class exists and belongs to admin
+      // Verify class exists, belongs to admin, and is not soft-deleted
       const { data: classData, error: classError } = await supabase
         .from('classes')
         .select('*')
         .eq('id', classId)
+        .is('deleted_at', null)
         .single();
 
       if (classError || !classData) {

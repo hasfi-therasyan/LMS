@@ -18,6 +18,7 @@ export async function GET(
       .from('classes')
       .select('*')
       .eq('id', params.id)
+      .is('deleted_at', null)
       .single();
 
     if (error) {
@@ -69,14 +70,14 @@ export async function DELETE(
       return createErrorResponse('You can only delete your own jobsheets', 403);
     }
 
-    // Delete the jobsheet
-    const { error: deleteError } = await supabase
+    // Soft delete: set deleted_at instead of removing row (quizzes and AI context remain)
+    const { error: updateError } = await supabase
       .from('classes')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', params.id);
 
-    if (deleteError) {
-      throw deleteError;
+    if (updateError) {
+      throw updateError;
     }
 
     return createSuccessResponse({ message: 'Jobsheet deleted successfully' });

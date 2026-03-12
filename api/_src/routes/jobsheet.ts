@@ -35,7 +35,7 @@ const upload = multer({
  */
 router.get('/', authenticate, async (req, res) => {
   try {
-    let query = supabase.from('classes').select('*');
+    let query = supabase.from('classes').select('*').is('deleted_at', null);
 
     // Admins can only see their own jobsheets
     if (req.user!.role === 'admin') {
@@ -172,11 +172,12 @@ router.get('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Fetch jobsheet
+    // Fetch jobsheet (exclude soft-deleted)
     const { data, error } = await supabase
       .from('classes')
       .select('*')
       .eq('id', id)
+      .is('deleted_at', null)
       .single();
 
     if (error) {
@@ -244,14 +245,14 @@ router.delete(
         });
       }
 
-      // Delete the jobsheet
-      const { error: deleteError } = await supabase
+      // Soft delete: set deleted_at instead of removing row (quizzes and AI context remain)
+      const { error: updateError } = await supabase
         .from('classes')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', id);
 
-      if (deleteError) {
-        throw deleteError;
+      if (updateError) {
+        throw updateError;
       }
 
       res.json({

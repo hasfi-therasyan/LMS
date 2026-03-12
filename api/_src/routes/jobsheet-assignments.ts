@@ -52,11 +52,12 @@ router.post(
 
       const { jobsheetId, nim } = uploadAssignmentSchema.parse(req.body);
 
-      // Check if jobsheet exists
+      // Check if jobsheet exists and is not soft-deleted
       const { data: jobsheet, error: jobsheetError } = await supabase
         .from('classes')
         .select('id, name')
         .eq('id', jobsheetId)
+        .is('deleted_at', null)
         .single();
 
       if (jobsheetError || !jobsheet) {
@@ -206,11 +207,12 @@ router.get(
   requireRole('admin'),
   async (req, res) => {
     try {
-      // Get all assignments from admin's jobsheets
+      // Get all assignments from admin's jobsheets (exclude soft-deleted)
       const { data: adminJobsheets, error: jobsheetError } = await supabase
         .from('classes')
         .select('id')
-        .eq('admin_id', req.user!.id);
+        .eq('admin_id', req.user!.id)
+        .is('deleted_at', null);
 
       if (jobsheetError) {
         throw jobsheetError;
@@ -288,11 +290,12 @@ router.get(
     try {
       const { jobsheetId } = req.params;
 
-      // Verify jobsheet exists and belongs to admin
+      // Verify jobsheet exists, belongs to admin, and is not soft-deleted
       const { data: jobsheet, error: jobsheetError } = await supabase
         .from('classes')
         .select('id, admin_id')
         .eq('id', jobsheetId)
+        .is('deleted_at', null)
         .single();
 
       if (jobsheetError || !jobsheet) {

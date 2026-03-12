@@ -15,11 +15,12 @@ export async function GET(
     const user = await authenticate(request);
     requireRole(user, 'admin');
 
-    // Verify jobsheet exists and belongs to admin
+    // Verify jobsheet exists, belongs to admin, and is not soft-deleted
     const { data: jobsheet, error: jobsheetError } = await supabase
       .from('classes')
       .select('id, admin_id')
       .eq('id', params.jobsheetId)
+      .is('deleted_at', null)
       .single();
 
     if (jobsheetError || !jobsheet) {

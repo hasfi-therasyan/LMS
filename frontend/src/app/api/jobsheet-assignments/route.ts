@@ -38,11 +38,12 @@ export async function POST(request: NextRequest) {
 
     const { jobsheetId, nim } = uploadAssignmentSchema.parse(fields);
 
-    // Check if jobsheet exists
+    // Check if jobsheet exists and is not soft-deleted
     const { data: jobsheet, error: jobsheetError } = await supabase
       .from('classes')
       .select('id, name')
       .eq('id', jobsheetId)
+      .is('deleted_at', null)
       .single();
 
     if (jobsheetError || !jobsheet) {
