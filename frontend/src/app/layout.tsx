@@ -6,8 +6,8 @@ import ToastProvider from '@/components/ToastProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Wiwik's Smart Classroom - Analytical AI Flipped Learning System",
-  description: "Wiwik's Smart Classroom: Analytical AI Flipped Learning System for higher education.",
+  title: "Wi Smart Classroom - Analytical AI Flipped Learning System",
+  description: "Wi Smart Classroom: Analytical AI Flipped Learning System for higher education.",
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },

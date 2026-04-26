@@ -1,0 +1,5 @@
+# Project rules
+
+## Git commits and push
+- Never add the trailer `Co-authored-by: Cursor <cursoragent@cursor.com>` to commit messages.
+- When committing or pushing on behalf of the user, use only the user's identity (e.g. hasfi-therasyan); do not include Cursor or cursoragent as co-author.
