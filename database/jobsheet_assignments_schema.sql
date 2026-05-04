@@ -2,7 +2,7 @@
 -- JOBSHEET ASSIGNMENTS TABLE
 -- ============================================
 -- Stores mahasiswa assignments (PDF uploads) for jobsheets
--- Each mahasiswa can upload up to 4 files per jobsheet
+-- Each mahasiswa can upload up to 5 files per jobsheet
 
 CREATE TABLE IF NOT EXISTS public.jobsheet_assignments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

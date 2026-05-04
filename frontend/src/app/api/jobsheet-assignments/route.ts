@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Jobsheet not found', 404);
     }
 
-    // Check if student already uploaded 4 files for this jobsheet
+    // Check if student already uploaded 5 files for this jobsheet
     const { data: existingAssignments, error: countError } = await supabase
       .from('jobsheet_assignments')
       .select('id')
@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
       throw countError;
     }
 
-    if (existingAssignments && existingAssignments.length >= 4) {
-      return createErrorResponse('You can only upload maximum 4 files per jobsheet', 400);
+    if (existingAssignments && existingAssignments.length >= 5) {
+      return createErrorResponse('You can only upload maximum 5 files per jobsheet', 400);
     }
 
     // Determine bucket name based on upload number

@@ -67,7 +67,7 @@ router.post(
         });
       }
 
-      // Check if student already uploaded 4 files for this jobsheet
+      // Check if student already uploaded 5 files for this jobsheet
       const { data: existingAssignments, error: countError } = await supabase
         .from('jobsheet_assignments')
         .select('id')
@@ -78,10 +78,10 @@ router.post(
         throw countError;
       }
 
-      if (existingAssignments && existingAssignments.length >= 4) {
+      if (existingAssignments && existingAssignments.length >= 5) {
         return res.status(400).json({
           error: 'Upload limit reached',
-          message: 'You can only upload maximum 4 files per jobsheet'
+          message: 'You can only upload maximum 5 files per jobsheet'
         });
       }
 
@@ -90,6 +90,7 @@ router.post(
       // Upload 2 -> jobsheet-assignments-2
       // Upload 3 -> jobsheet-assignments-3
       // Upload 4 -> jobsheet-assignments-4
+      // Upload 5 -> jobsheet-assignments-5
       const uploadNumber = (existingAssignments?.length || 0) + 1;
       const bucketName = uploadNumber === 1 
         ? 'jobsheet-assignments' 

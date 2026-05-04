@@ -318,7 +318,7 @@ export default function ViewAssignmentsModal({
                           <p className="text-xs text-gray-500 mt-1">NIM: {nim}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm text-gray-600">Total Files: {studentAssignments.length} / 4</p>
+                          <p className="text-sm text-gray-600">Total Files: {studentAssignments.length} / 5</p>
                         </div>
                       </div>
 

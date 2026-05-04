@@ -57,6 +57,8 @@ interface Submission {
   };
 }
 
+const MAX_ASSIGNMENT_FILES_PER_JOBSHEET = 5;
+
 export default function StudentDashboard() {
   const router = useRouter();
   const { profile, loadProfile } = useAuthStore();
@@ -561,7 +563,7 @@ export default function StudentDashboard() {
         <div className="animate-fade-in">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Jobsheet Assignments</h2>
-            <p className="text-sm text-gray-600 mb-2">Upload your assignment files (Maximum 4 files per jobsheet)</p>
+            <p className="text-sm text-gray-600 mb-2">Upload your assignment files (Maximum {MAX_ASSIGNMENT_FILES_PER_JOBSHEET} files per jobsheet)</p>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
               <p className="text-sm text-blue-800">
                 <span className="font-semibold">⚠️ Format Nama File:</span> File harus berformat <span className="font-mono font-semibold">NamaMahasiswa_NomorJobsheet.pdf</span>
@@ -574,7 +576,7 @@ export default function StudentDashboard() {
             {jobsheets.map((jobsheet) => {
               const jobsheetAssignments = assignments.filter(a => a.classes?.id === jobsheet.id);
               const uploadedCount = jobsheetAssignments.length;
-              const canUpload = uploadedCount < 4;
+              const canUpload = uploadedCount < MAX_ASSIGNMENT_FILES_PER_JOBSHEET;
               
               return (
                 <div
@@ -606,12 +608,12 @@ export default function StudentDashboard() {
                     <div className="flex items-center space-x-4 ml-6 flex-shrink-0">
                       <div className="text-right">
                         <p className="text-sm text-gray-600">Progress</p>
-                        <p className="text-lg font-bold text-gray-900">{uploadedCount} / 4</p>
+                        <p className="text-lg font-bold text-gray-900">{uploadedCount} / {MAX_ASSIGNMENT_FILES_PER_JOBSHEET}</p>
                       </div>
                       <div className="w-32 bg-gray-200 rounded-full h-3">
                         <div
                           className="bg-primary-600 h-3 rounded-full transition-all"
-                          style={{ width: `${(uploadedCount / 4) * 100}%` }}
+                          style={{ width: `${(uploadedCount / MAX_ASSIGNMENT_FILES_PER_JOBSHEET) * 100}%` }}
                         ></div>
                       </div>
                       <button
