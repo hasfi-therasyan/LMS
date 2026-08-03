@@ -1,5 +1,6 @@
 # Learning Management System (LMS) with AI Chatbot
 
+![Dashboard Preview](./dashboard.png)
 A comprehensive LMS platform for higher education with AI-powered post-quiz learning assistance.
 
 ## Features
